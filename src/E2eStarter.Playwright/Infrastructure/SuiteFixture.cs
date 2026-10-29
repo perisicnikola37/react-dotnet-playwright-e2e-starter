@@ -10,7 +10,7 @@ public sealed class SuiteFixture : IAsyncLifetime
 {
     public TestSettings Settings { get; } = SettingsLoader.Load();
 
-    public string ArtifactsRoot { get; private set; } = string.Empty;
+    public string ArtifactsRoot => RunArtifacts.Root(Settings);
 
     private IPlaywright? _playwright;
 
@@ -18,9 +18,6 @@ public sealed class SuiteFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        var runId = Environment.GetEnvironmentVariable("E2E_RUN_ID") ?? DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-        ArtifactsRoot = Path.GetFullPath(Path.Combine(Settings.Artifacts.Directory, runId));
-
         _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
         var launch = new BrowserTypeLaunchOptions

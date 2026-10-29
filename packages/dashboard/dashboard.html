@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>E2E test dashboard</title>
+<meta name="robots" content="noindex">
+<title>UI test dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f5c518'/%3E%3Cpath d='M9 17l5 5 9-11' stroke='%23111' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--text:#1c2430;--muted:#667085;--line:#e3e6eb;--head:#121826;--accent:#f5c518;--pass:#16a34a;--fail:#dc2626;--skip:#d97706;--failbg:#fdecec;--code:#f3f4f6}
 [data-theme=dark]{--bg:#0d111a;--card:#161c28;--text:#e6e9ef;--muted:#8b95a7;--line:#252d3d;--head:#0a0d14;--failbg:#2b1519;--code:#1d2433}
@@ -42,6 +44,12 @@ aside .rr b{display:block;font-size:12px}aside .rr small{color:var(--muted);font
 .hid{display:none}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px}
 .tl .lane{height:14px;background:var(--code);border-radius:3px;position:relative;margin:4px 14px}.tl .lane i{position:absolute;top:0;bottom:0;border-radius:3px}
 .foot{height:40px}
+.dot.queued{background:transparent;border:2px solid var(--line)}.dot.running{background:#2563eb;animation:pulse 1s ease-in-out infinite alternate}
+.pill.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#60a5fa;margin-right:7px;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+aside .rr:disabled{opacity:.5;cursor:default}.notice{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:18px}.notice pre{background:var(--code);border-radius:8px;padding:10px;max-height:340px;overflow:auto;font-size:12px;white-space:pre-wrap}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px;margin-right:8px}@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.dot.running,.pill.live::before,.spin{animation:none}}
 @media(max-width:800px){.layout{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
 </style>
 </head>
@@ -49,130 +57,258 @@ aside .rr b{display:block;font-size:12px}aside .rr small{color:var(--muted);font
 <script id="report-data" type="application/json">null</script>
 <div id="app"></div>
 <script>
-(async () => {
+(() => {
+  // Data sources, in order: the embedded report-data (report.html), data.json (finished run), events.jsonl (live run).
+  // Served by E2eStarter.AspNetCore (".../dashboard/{token}/{runId}/") it also reads api/run and offers real re-runs;
+  // anywhere else the re-run buttons copy a CLI command.
   const $ = (s, r = document) => r.querySelector(s);
-  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  let data = JSON.parse($("#report-data").textContent);
-  if (!data) { try { data = await (await fetch("data.json")).json(); } catch { /* handled below */ } }
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Only relative paths, data:image and http(s) URLs end up in src/href.
+  const url = (u) => !u ? "" : /^(https?:|data:image\/)/i.test(u) || !/^[a-z][a-z0-9+.-]*:/i.test(u) ? u : "";
   const app = $("#app");
-  if (!data) { app.innerHTML = '<div class="wrap"><p>No run data found. Provide <code>data.json</code> next to this page.</p></div>'; return; }
+  const served = /\/dashboard\/[^/]+\/[^/]+\//.test(location.pathname);
+  const POLL_MS = 1500;
 
-  const fmt = (ms) => ms >= 60000 ? Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0") : ms >= 1000 && ms < 10000 ? (ms / 1000).toFixed(1) + " s" : ms < 1000 ? ms + " ms" : "0:" + String(Math.round(ms / 1000)).padStart(2, "0");
-  const tests = data.tests.map((t) => ({
-    ...t,
-    group: t.name.split(".").slice(-2, -1)[0]?.replace(/Tests$/, "") || "Tests",
-    isNew: t.status === "failed" && t.previous === "passed",
-    still: t.status === "failed" && t.previous === "failed",
-  }));
-  const by = (s) => tests.filter((t) => t.status === s);
-  const total = tests.length, failed = by("failed"), passed = by("passed"), skipped = by("skipped");
-  const elapsed = data.elapsedMs ?? tests.reduce((a, t) => a + t.durationMs, 0);
-  const st = { view: "tests", filter: "all", cat: null, q: "", open: new Set(failed.map((t) => t.name)), collapsed: new Set(), tl: false, slow: false, theme: localStorage.theme || "light" };
-  const cats = [...new Set(tests.flatMap((t) => t.categories))].sort();
+  const fmt = (ms) => ms >= 60000 ? Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0") : ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : Math.max(0, Math.round(ms)) + " ms";
+  const short = (name) => name.split("(")[0].split(".").pop().replaceAll("_", " ");
+  const toast = (m) => { const e = document.createElement("div"); e.className = "toast"; e.setAttribute("role", "status"); e.textContent = m; document.body.append(e); setTimeout(() => e.remove(), 1800); };
+  const copy = (txt, m = "Copied") => navigator.clipboard ? navigator.clipboard.writeText(txt).then(() => toast(m), () => toast("Copy failed")) : toast("Copy failed");
   const cmd = (extra) => "scripts/run-e2e.sh" + (extra ? " -- " + extra : "");
-  const toast = (m) => { const e = document.createElement("div"); e.className = "toast"; e.textContent = m; document.body.append(e); setTimeout(() => e.remove(), 1600); };
-  const copy = (txt, m = "Copied") => navigator.clipboard?.writeText(txt).then(() => toast(m), () => toast("Copy failed"));
+  const methods = (ts) => ts.map((t) => `--filter-method "${t.name.split("(")[0]}"`).join(" ");
 
-  const shotHtml = (t) => t.screenshot ? `<img src="${esc(t.screenshot)}" alt="Screenshot of ${esc(t.name)}">` : "";
+  async function getText(path) {
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) throw new Error(path + ": " + r.status);
+    return r.text();
+  }
+  const getJson = async (path) => JSON.parse(await getText(path));
+
+  function fromEvents(text) {
+    let run = null, finishedAt = null;
+    const tests = new Map();
+    for (const line of text.split("\n")) {
+      let e; try { e = line.trim() && JSON.parse(line); } catch { continue; }
+      if (!e) continue;
+      if (e.type === "run-start") { run = e; for (const t of e.tests ?? []) tests.set(t.name, { name: t.name, categories: t.categories ?? [], status: "queued", durationMs: 0 }); }
+      else if (e.type === "test-start") tests.set(e.name, { ...(tests.get(e.name) ?? { name: e.name, categories: [] }), status: "running", durationMs: 0, since: Date.now() });
+      else if (e.type === "test-end" && e.test) tests.set(e.test.name, e.test);
+      else if (e.type === "run-end") finishedAt = e.finishedAt;
+    }
+    if (!run) return null;
+    let list = [...tests.values()];
+    // Planned names that never ran (e.g. theories expanded at run time) are dropped once the run is over.
+    if (finishedAt) list = list.filter((t) => t.status !== "queued" && t.status !== "running");
+    return {
+      title: run.title, runId: run.runId, environment: run.environment, baseUrl: run.baseUrl, startedAt: run.startedAt,
+      elapsedMs: (finishedAt ? Date.parse(finishedAt) : Date.now()) - Date.parse(run.startedAt), tests: list, live: !finishedAt,
+    };
+  }
+
+  // phase: "loading" | "starting" (no events yet) | "live" | "done" | "empty" (ended without results) | "missing"
+  let data = null, phase = "loading", runInfo = null, logTail = "", pollMisses = 0;
+  const embedded = JSON.parse($("#report-data").textContent);
+
+  async function refresh() {
+    if (embedded) { data = embedded; phase = "done"; return; }
+    if (served) { try { runInfo = await getJson("api/run"); } catch { runInfo = null; } }
+    const runOver = served && runInfo && runInfo.status !== "running";
+    // While the API reports the run as running, data.json does not exist yet; skip the request (and its 404).
+    if (!(served && runInfo?.status === "running")) {
+      try { data = await getJson("data.json"); phase = "done"; return; } catch { /* not written yet */ }
+    }
+    let live = null;
+    try { live = fromEvents(await getText("events.jsonl")); } catch { /* no events yet */ }
+    if (live) {
+      data = live;
+      // events.jsonl ended but data.json is not there yet: the report is being written, wait a little longer.
+      phase = live.live || (!runOver && ++pollMisses < 40) ? "live" : "done";
+      return;
+    }
+    if (served && runInfo?.status === "running") phase = "starting";
+    else phase = served && runInfo ? "empty" : "missing";
+    if (served && phase !== "missing") { try { logTail = (await getText("api/log")).split("\n").slice(-40).join("\n"); } catch { logTail = ""; } }
+  }
+
+  const st = { view: "tests", filter: "all", cat: null, q: "", open: new Set(), opened: false, collapsed: new Set(), tl: false, slow: false, theme: localStorage.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"), busy: false };
+  const mark = { passed: "✓", failed: "✕", skipped: "–", queued: "", running: "" };
+
+  function model() {
+    const tests = data.tests.map((t) => ({
+      ...t,
+      categories: t.categories ?? [],
+      group: t.name.split("(")[0].split(".").slice(-2, -1)[0]?.replace(/Tests$/, "") || "Tests",
+      isNew: t.status === "failed" && t.previous === "passed",
+      still: t.status === "failed" && t.previous === "failed",
+    }));
+    const by = (s) => tests.filter((t) => t.status === s);
+    const failed = by("failed"), passed = by("passed"), skipped = by("skipped"), running = by("running"), queued = by("queued");
+    const done = failed.length + passed.length + skipped.length;
+    return { tests, failed, passed, skipped, running, queued, done, total: tests.length, elapsed: data.elapsedMs ?? tests.reduce((a, t) => a + (t.durationMs || 0), 0) };
+  }
+
+  const shotHtml = (t) => url(t.screenshot) ? `<img src="${esc(url(t.screenshot))}" alt="Screenshot of ${esc(short(t.name))}" loading="lazy">` : "";
   function detail(t) {
     const failedStep = t.failedStep ?? -1;
     return `<div class="detail">
       ${t.error ? `<div class="err mono">${esc(t.error)}<button class="btn" style="position:absolute;right:8px;top:8px" data-copy="${esc(t.error)}">Copy</button></div>` : ""}
       <div class="acts">
-        <button class="btn" data-copy="${esc("**" + t.name + "** (" + t.status + ")\n\n" + (t.error ?? ""))}">Copy as markdown</button>
-        ${t.screenshot ? `<button class="btn" data-link="${esc(t.screenshot)}">Download screenshot</button>` : ""}
+        <button class="btn" data-copy="${esc("**" + t.name + "** (" + t.status + ")\n\n```\n" + (t.error ?? "") + "\n```")}">Copy as markdown</button>
+        ${url(t.screenshot) ? `<button class="btn" data-link="${esc(url(t.screenshot))}" data-name="${esc(short(t.name).replaceAll(" ", "_"))}">Download screenshot</button>` : ""}
         <button class="btn" data-copy="${esc(location.href.split("#")[0] + "#" + encodeURIComponent(t.name))}">Copy link</button>
+        ${t.status === "failed" ? `<button class="btn" data-copy="${esc(cmd(methods([t])))}" data-msg="Command copied">Copy command to run it</button>` : ""}
       </div>
       <div class="two"><div class="shot">${shotHtml(t)}</div><div>
         ${t.url ? `<div class="box"><h5>PAGE URL</h5><div class="c mono">${esc(t.url)}</div></div>` : ""}
-        ${t.steps?.length ? `<div class="box"><h5>STEPS${failedStep >= 0 ? " · LAST ONE RAN BEFORE THE FAILURE" : ""}</h5><div class="c"><ol>${t.steps.map((s, i) => `<li class="${i === failedStep ? "bad" : ""}">${i + 1}. ${esc(s)}</li>`).join("")}</ol></div></div>` : ""}
+        ${t.steps?.length ? `<div class="box"><h5>STEPS${failedStep >= 0 ? " · FAILED AT STEP " + (failedStep + 1) : ""}</h5><div class="c"><ol>${t.steps.map((s, i) => `<li class="${i === failedStep ? "bad" : ""}">${i + 1}. ${esc(s)}</li>`).join("")}</ol></div></div>` : ""}
         ${t.console?.length ? `<div class="box"><h5>BROWSER CONSOLE</h5><div class="c mono">${t.console.map(esc).join("<br>")}</div></div>` : ""}
-        ${t.pageHtml ? `<p><a href="${esc(t.pageHtml)}" target="_blank" rel="noopener">Open captured page HTML ↗</a></p>` : ""}
-        ${t.trace ? `<p><a href="${esc(t.trace)}" download>Download Playwright trace ↓</a> <small style="color:var(--muted)">(open with <code>npx playwright show-trace</code>)</small></p>` : ""}
+        ${url(t.pageHtml) ? `<p><a href="${esc(url(t.pageHtml))}" target="_blank" rel="noopener noreferrer">Open captured page HTML ↗</a></p>` : ""}
+        ${url(t.trace) ? `<p><a href="${esc(url(t.trace))}" download>Download Playwright trace ↓</a> <small style="color:var(--muted)">(open with <code>npx playwright show-trace trace.zip</code>)</small></p>` : ""}
       </div></div>
       ${t.stack ? `<div class="box" style="margin-top:8px"><h5>STACK TRACE</h5><div class="c mono" style="white-space:pre-wrap">${esc(t.stack)}</div></div>` : ""}
       <div class="mono" style="color:var(--muted);font-size:11px;margin-top:6px">${esc(t.name)}</div></div>`;
   }
   const badge = (t) => t.isNew ? '<span class="chip new">New failure</span>' : t.still ? '<span class="chip still">Still failing</span>' : "";
-  const mark = { passed: "✓", failed: "✕", skipped: "–" };
+  const duration = (t) => t.status === "running" ? "running…" : t.status === "queued" ? "queued" : fmt(t.durationMs || 0);
 
-  function visible() {
+  function visible(m) {
     const q = st.q.toLowerCase();
-    return tests.filter((t) =>
+    return m.tests.filter((t) =>
       (st.filter === "all" || (st.filter === "new" ? t.isNew : t.status === st.filter)) &&
       (!st.cat || t.categories.includes(st.cat)) && (!q || t.name.toLowerCase().includes(q)));
   }
-  function timeline() {
-    const lanes = []; let cursor = 0;
-    tests.forEach((t) => { (lanes[0] ??= []).push({ t, s: cursor }); cursor += t.durationMs; });
-    return `<div class="tl" style="padding:8px 0">${lanes.map((l) => `<div class="lane">${l.map(({ t, s }) => `<i title="${esc(t.name)}" style="left:${(s / cursor) * 100}%;width:${(t.durationMs / cursor) * 100}%;background:var(--${t.status === "passed" ? "pass" : t.status === "failed" ? "fail" : "skip"});opacity:.85"></i>`).join("")}</div>`).join("")}</div>`;
+  function timeline(m) {
+    const ran = m.tests.filter((t) => t.durationMs > 0), sum = ran.reduce((a, t) => a + t.durationMs, 0) || 1;
+    let cursor = 0;
+    return `<div class="tl" style="padding:8px 0"><div class="lane">${ran.map((t) => { const s = cursor; cursor += t.durationMs; return `<i title="${esc(t.name)} · ${fmt(t.durationMs)}" style="left:${(s / sum) * 100}%;width:${(t.durationMs / sum) * 100}%;background:var(--${t.status === "passed" ? "pass" : t.status === "failed" ? "fail" : "skip"});opacity:.85;border-right:1px solid var(--card)"></i>`; }).join("")}</div></div>`;
   }
+
+  function rerunPanel(m) {
+    const live = phase === "live";
+    if (served) {
+      const items = [["▶", "All tests", runInfo?.category ? "category " + runInfo.category : "the whole suite", "all", false],
+        ["✕", "Failed only", m.failed.length + " failed test" + (m.failed.length === 1 ? "" : "s"), "failed", !m.failed.length]];
+      if (runInfo?.tests?.length) items.push(["↻", "Same selection", runInfo.tests.length + " selected tests", "same", false]);
+      return `<h6>RE-RUN</h6>${items.map(([i, a, b, mode, off]) => `<button class="rr" data-rerun="${mode}" ${off || live || st.busy ? "disabled" : ""}><span>${i}</span><span><b>${a}</b><small>${esc(b)}</small></span></button>`).join("")}
+        <p>${live ? "Available when this run has finished." : "Starts a new run and opens it here."}</p>`;
+    }
+    const cats = [...new Set(m.tests.flatMap((t) => t.categories))].sort();
+    const items = [["▶", "All tests", "the whole suite", cmd("")], ["✕", "Failed only", m.failed.length + " failed", m.failed.length ? cmd(methods(m.failed)) : ""],
+      ...cats.map((c) => ["#", c, "category", "scripts/run-e2e.sh --category " + c])];
+    return `<h6>RE-RUN</h6>${items.map(([i, a, b, c]) => `<button class="rr" data-copy="${esc(c)}" data-msg="Command copied" ${c ? "" : "disabled"}><span>${esc(i)}</span><span><b>${esc(a)}</b><small>${esc(b)}</small></span></button>`).join("")}
+      <p>Copies the command; run it in your terminal or CI.</p>`;
+  }
+
+  function notice() {
+    const head = `<header><div class="wrap"><div class="top"><div class="logo">E2E</div><div><h1>${esc(runInfo ? "Run " + runInfo.id : "UI test dashboard")}</h1></div></div></div></header>`;
+    if (phase === "starting") return head + `<div class="wrap"><div class="notice"><p><span class="spin"></span><b>Starting the run…</b> building the tests and launching the browser. Results appear here as soon as the first test finishes.</p>${logTail ? `<pre class="mono">${esc(logTail)}</pre>` : ""}</div></div>`;
+    if (phase === "empty") return head + `<div class="wrap"><div class="notice"><p><b>The run ended without results</b> (status: ${esc(runInfo?.status)}${runInfo?.exitCode != null ? ", exit code " + esc(runInfo.exitCode) : ""}). Usually the build failed or the app under test was not reachable. The end of the runner log:</p>${logTail ? `<pre class="mono">${esc(logTail)}</pre>` : "<p>No log was written.</p>"}<p><a href="api/log" target="_blank" rel="noopener noreferrer">Open the full runner log ↗</a></p></div></div>`;
+    if (phase === "loading") return `<div class="wrap"><div class="notice"><span class="spin"></span>Loading…</div></div>`;
+    return `<div class="wrap"><div class="notice"><p>No run data found. Put a <code>data.json</code> (finished run) or <code>events.jsonl</code> (live run) next to this page, or embed the data in the <code>report-data</code> script tag.</p></div></div>`;
+  }
+
   function render() {
     document.documentElement.dataset.theme = st.theme;
-    const list = visible(), groups = {};
+    const active = document.activeElement?.id === "q" ? [$("#q").selectionStart, $("#q").selectionEnd] : null;
+    if (!data || phase === "starting" || phase === "empty" || phase === "missing" || phase === "loading") {
+      document.title = "UI test dashboard";
+      app.innerHTML = notice();
+      return;
+    }
+    const m = model(), live = phase === "live";
+    if (!st.opened) { m.failed.forEach((t) => st.open.add(t.name)); st.opened = true; }
+    const list = visible(m), groups = {};
     list.forEach((t) => (groups[t.group] ??= []).push(t));
-    const slow = [...tests].sort((a, b) => b.durationMs - a.durationMs).slice(0, 5);
-    const prev = data.previousRunId;
+    const slow = [...m.tests].filter((t) => t.durationMs > 0).sort((a, b) => b.durationMs - a.durationMs).slice(0, 5);
+    const pct = m.total ? Math.floor((m.done / m.total) * 100) : 100;
+    const w = (n) => m.total ? (n / m.total) * 100 : 0;
+    const news = m.tests.filter((t) => t.isNew).length, still = m.tests.filter((t) => t.still).length;
+    const cats = [...new Set(m.tests.flatMap((t) => t.categories))].sort();
+    const pill = live ? `<span class="pill live">Running · ${m.done}/${m.total}</span>` : m.failed.length ? `<span class="pill bad">${m.failed.length} failed</span>` : m.passed.length === m.total ? '<span class="pill">All passed</span>' : '<span class="pill">No failures</span>';
+    document.title = `${live ? "▶ " + pct + "%" : m.failed.length ? "✕ " + m.failed.length + " failed" : "✓ passed"} · ${data.title}`;
     app.innerHTML = `
     <header><div class="wrap">
-      <div class="top"><div class="logo">E2E</div><div><h1>${esc(data.title)}</h1><small>Run <b>${esc(data.runId)}</b> · ${esc(data.environment)} · <a href="${esc(data.baseUrl)}">${esc(data.baseUrl)}</a> · ${new Date(data.startedAt).toLocaleString()}</small></div><div class="sp"></div>
-        ${failed.length ? `<span class="pill bad">${failed.length} failed</span>` : '<span class="pill">All passed</span>'}<button class="icon" id="theme" aria-label="Toggle theme">${st.theme === "dark" ? "☀" : "☾"}</button></div>
-      <div class="bar"><i style="width:${(passed.length / total) * 100}%;background:var(--pass)"></i><i style="width:${(failed.length / total) * 100}%;background:var(--fail)"></i><i style="width:${(skipped.length / total) * 100}%;background:var(--skip)"></i></div>
-      <div class="meta"><b>100%</b><span><b>${total}</b> / ${total} tests</span><span>Elapsed <b>${fmt(elapsed)}</b></span></div>
+      <div class="top"><div class="logo">E2E</div><div><h1>${esc(data.title)}</h1><small>Run <b>${esc(data.runId)}</b> · ${esc(data.environment)} · <a href="${esc(url(data.baseUrl))}" target="_blank" rel="noopener noreferrer">${esc(data.baseUrl)}</a> · ${new Date(data.startedAt).toLocaleString()}</small></div><div class="sp"></div>
+        ${pill}<button class="icon" id="theme" aria-label="Toggle theme">${st.theme === "dark" ? "☀" : "☾"}</button></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${w(m.passed.length)}%;background:var(--pass)"></i><i style="width:${w(m.failed.length)}%;background:var(--fail)"></i><i style="width:${w(m.skipped.length)}%;background:var(--skip)"></i></div>
+      <div class="meta"><b>${pct}%</b><span><b>${m.done}</b> / ${m.total} tests</span><span>Elapsed <b>${fmt(m.elapsed)}</b></span>${live && m.running.length ? `<span>Now: <b>${esc(short(m.running[0].name))}</b></span>` : ""}</div>
     </div></header>
-    <div class="wrap layout"><aside><h6>RE-RUN</h6>
-      ${[["▶", "All tests", "the whole suite", ""], ["✕", "Failed only", failed.length + " failed tests", "--filter-method " + failed.map((t) => "*" + t.name.split(".").pop()).join(" ")], ["½", "1/2 of tests", "random half", "--random 2"], ["⅓", "1/3 of tests", "random third", "--random 3"], ["¼", "1/4 of tests", "random quarter", "--random 4"]]
-        .map(([i, a, b, c]) => `<button class="rr" data-copy="${esc(cmd(c))}" data-msg="Re-run command copied"><span>${i}</span><span><b>${a}</b><small>${b}</small></span></button>`).join("")}
-      <p>Copies the command; run it in your terminal or CI.</p></aside>
+    <div class="wrap layout"><aside>${rerunPanel(m)}</aside>
     <main>
-      <div class="cards">${[["all", total, "TOTAL", ""], ["passed", passed.length, "PASSED", "p"], ["failed", failed.length, "FAILED", "f"], ["skipped", skipped.length, "SKIPPED", "s"]]
+      <div class="cards">${[["all", m.total, "TOTAL", ""], ["passed", m.passed.length, "PASSED", "p"], ["failed", m.failed.length, "FAILED", "f"], ["skipped", m.skipped.length, "SKIPPED", "s"]]
         .map(([k, n, l, c]) => `<button class="stat ${c} ${st.filter === k ? "on" : ""}" data-filter="${k}"><strong>${n}</strong><span>${l}</span></button>`).join("")}
-        <div class="stat"><strong>${fmt(elapsed)}</strong><span>DURATION</span></div></div>
-      ${prev ? `<div class="panel row"><span style="color:var(--muted)">vs run <b style="color:var(--text)">${esc(prev)}</b></span>${tests.some((t) => t.isNew) ? `<span class="chip new">${tests.filter((t) => t.isNew).length} new failure</span>` : ""}${tests.some((t) => t.still) ? `<span class="chip still">${tests.filter((t) => t.still).length} still failing</span>` : ""}</div>` : ""}
-      ${failed.length ? `<div class="panel fails"><div class="row"><h4>FAILURES</h4><span class="tag">${failed.length}</span><small style="color:var(--muted)">grouped by cause · <kbd>j</kbd> <kbd>k</kbd> step through</small><div class="sp"></div><button class="btn red" data-copy="${esc(cmd("--filter-method " + failed.map((t) => "*" + t.name.split(".").pop()).join(" ")))}" data-msg="Re-run command copied">Copy re-run command</button></div>
-        ${failed.map((t) => `<div class="fi" data-jump="${esc(t.name)}"><div class="thumb">${shotHtml(t)}</div><div class="t"><div><span class="dot failed">✕</span> <b>${esc(t.name)}</b> <span style="color:var(--muted)">· ${esc(t.group)}</span> ${badge(t)}</div><pre class="mono">${esc((t.error ?? "").split("\n").slice(0, 3).join(" "))}</pre></div><span style="color:var(--muted)">${fmt(t.durationMs)}</span></div>`).join("")}</div>` : ""}
-      <div class="panel"><div class="row"><h4 class="m">TIMELINE</h4><small style="color:var(--muted)">1 parallel browser at peak · wall ${fmt(elapsed)}</small><div class="sp"></div><button class="btn" data-toggle="tl">${st.tl ? "Hide" : "Show"}</button></div>${st.tl ? timeline() : ""}</div>
-      <div class="panel"><div class="row"><h4 class="m">SLOWEST TESTS</h4><div class="sp"></div><button class="btn" data-toggle="slow">${st.slow ? "Hide" : "Show"}</button></div>${st.slow ? slow.map((t) => `<div class="ti"><span class="dot ${t.status}">${mark[t.status]}</span>${esc(t.name)}<span class="d">${fmt(t.durationMs)}</span></div>`).join("") : ""}</div>
-      <div class="tools"><input id="q" placeholder="Search tests, classes or arguments   ( / )" value="${esc(st.q)}">
-        <button class="btn ${st.view === "tests" ? "on" : ""}" data-view="tests">Tests</button><button class="btn ${st.view === "gallery" ? "on" : ""}" data-view="gallery">Gallery · ${total}</button>
-        ${[["all", "All", total], ["failed", "Failed", failed.length], ["passed", "Passed", passed.length], ["skipped", "Skipped", skipped.length], ["new", "New failures", tests.filter((t) => t.isNew).length]].map(([k, l, n]) => `<button class="btn ${st.filter === k ? "on" : ""}" data-filter="${k}">${l} ${n}</button>`).join("")}
+        <div class="stat"><strong>${fmt(m.elapsed)}</strong><span>${live ? "ELAPSED" : "DURATION"}</span></div></div>
+      ${data.previousRunId ? `<div class="panel row"><span style="color:var(--muted)">vs run <b style="color:var(--text)">${esc(data.previousRunId)}</b></span>${news ? `<span class="chip new">${news} new failure${news === 1 ? "" : "s"}</span>` : ""}${still ? `<span class="chip still">${still} still failing</span>` : ""}${!news && !still ? '<span style="color:var(--muted)">no repeated or new failures</span>' : ""}</div>` : ""}
+      ${m.failed.length ? `<div class="panel fails"><div class="row"><h4>FAILURES</h4><span class="tag">${m.failed.length}</span><small style="color:var(--muted)"><kbd>j</kbd> <kbd>k</kbd> step through</small><div class="sp"></div><button class="btn red" data-copy="${esc(cmd(methods(m.failed)))}" data-msg="Command copied">Copy command to re-run them</button></div>
+        ${m.failed.map((t) => `<div class="fi" data-jump="${esc(t.name)}"><div class="thumb">${shotHtml(t)}</div><div class="t"><div><span class="dot failed">✕</span> <b>${esc(short(t.name))}</b> <span style="color:var(--muted)">· ${esc(t.group)}</span> ${badge(t)}</div><pre class="mono">${esc((t.error ?? "").split("\n").slice(0, 3).join(" "))}</pre></div><span style="color:var(--muted)">${fmt(t.durationMs || 0)}</span></div>`).join("")}</div>` : ""}
+      <div class="panel"><div class="row"><h4 class="m">TIME SPENT</h4><small style="color:var(--muted)">share of ${fmt(m.tests.reduce((a, t) => a + (t.durationMs || 0), 0))} in tests · wall ${fmt(m.elapsed)}</small><div class="sp"></div><button class="btn" data-toggle="tl">${st.tl ? "Hide" : "Show"}</button></div>${st.tl ? timeline(m) : ""}</div>
+      <div class="panel"><div class="row"><h4 class="m">SLOWEST TESTS</h4><div class="sp"></div><button class="btn" data-toggle="slow">${st.slow ? "Hide" : "Show"}</button></div>${st.slow ? slow.map((t) => `<div class="ti" data-jump="${esc(t.name)}"><span class="dot ${t.status}">${mark[t.status]}</span>${esc(t.name)}<span class="d">${fmt(t.durationMs)}</span></div>`).join("") : ""}</div>
+      <div class="tools"><input id="q" aria-label="Search tests" placeholder="Search tests, classes or arguments   ( / )" value="${esc(st.q)}">
+        <button class="btn ${st.view === "tests" ? "on" : ""}" data-view="tests">Tests</button><button class="btn ${st.view === "gallery" ? "on" : ""}" data-view="gallery">Gallery · ${m.tests.filter((t) => url(t.screenshot)).length}</button>
+        ${[["all", "All", m.total], ["failed", "Failed", m.failed.length], ["passed", "Passed", m.passed.length], ["skipped", "Skipped", m.skipped.length], ["new", "New failures", news]].map(([k, l, n]) => `<button class="btn ${st.filter === k ? "on" : ""}" data-filter="${k}">${l} ${n}</button>`).join("")}
         <button class="btn" id="expand">Expand all</button><button class="btn" id="collapse">Collapse all</button></div>
-      <div class="cats">CATEGORY ${cats.map((c) => `<button class="btn ${st.cat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${tests.filter((t) => t.categories.includes(c)).length}</button>`).join("")}</div>
-      ${st.view === "gallery" ? `<div class="gallery">${list.map((t) => `<div class="g">${t.screenshot ? `<img src="${esc(t.screenshot)}" alt="">` : "<img alt=''>"}<div><span class="dot ${t.status}" style="display:inline-grid">${mark[t.status]}</span> ${esc(t.name.split(".").pop())}</div></div>`).join("")}</div>`
+      ${cats.length ? `<div class="cats">CATEGORY ${cats.map((c) => `<button class="btn ${st.cat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${m.tests.filter((t) => t.categories.includes(c)).length}</button>`).join("")}</div>` : ""}
+      ${st.view === "gallery" ? `<div class="gallery">${list.filter((t) => url(t.screenshot)).map((t) => `<div class="g" data-jump="${esc(t.name)}">${shotHtml(t)}<div><span class="dot ${t.status}" style="display:inline-grid">${mark[t.status]}</span> ${esc(short(t.name))}</div></div>`).join("") || '<p style="color:var(--muted)">No screenshots. They are taken for failed tests.</p>'}</div>`
       : Object.entries(groups).map(([g, ts]) => {
-        const f = ts.filter((t) => t.status === "failed").length, p = ts.filter((t) => t.status === "passed").length, sk = ts.length - f - p, shut = st.collapsed.has(g);
+        const f = ts.filter((t) => t.status === "failed").length, p = ts.filter((t) => t.status === "passed").length, sk = ts.filter((t) => t.status === "skipped").length, shut = st.collapsed.has(g);
         return `<div class="panel grp"><div class="gh" data-group="${esc(g)}"><span>${shut ? "›" : "⌄"}</span>${esc(g)} ${[...new Set(ts.flatMap((t) => t.categories))].map((c) => `<span class="tag">${esc(c)}</span>`).join("")}${f ? '<span class="dot failed">✕</span>' : ""}
-          <span class="stat2">${ts.length}/${ts.length}${f ? ` · ${f} failed` : ""} · ${fmt(ts.reduce((a, t) => a + t.durationMs, 0))}</span><span class="mini"><i style="width:${(p / ts.length) * 100}%;background:var(--pass)"></i><i style="width:${(f / ts.length) * 100}%;background:var(--fail)"></i><i style="width:${(sk / ts.length) * 100}%;background:var(--skip)"></i></span></div>
-          ${shut ? "" : ts.map((t) => `<div id="${esc(encodeURIComponent(t.name))}"><div class="ti" data-test="${esc(t.name)}"><span class="dot ${t.status}">${mark[t.status]}</span>${esc(t.name)} ${badge(t)}<span class="d">${fmt(t.durationMs)}</span></div>${st.open.has(t.name) ? detail(t) : ""}</div>`).join("")}</div>`;
+          <span class="stat2">${f + p + sk}/${ts.length}${f ? ` · ${f} failed` : ""} · ${fmt(ts.reduce((a, t) => a + (t.durationMs || 0), 0))}</span><span class="mini"><i style="width:${(p / ts.length) * 100}%;background:var(--pass)"></i><i style="width:${(f / ts.length) * 100}%;background:var(--fail)"></i><i style="width:${(sk / ts.length) * 100}%;background:var(--skip)"></i></span></div>
+          ${shut ? "" : ts.map((t) => `<div id="${esc(encodeURIComponent(t.name))}"><div class="ti" data-test="${esc(t.name)}" data-status="${t.status}"><span class="dot ${t.status}">${mark[t.status]}</span>${esc(t.name)} ${badge(t)}<span class="d">${duration(t)}</span></div>${st.open.has(t.name) && t.status !== "queued" && t.status !== "running" ? detail(t) : ""}</div>`).join("")}</div>`;
       }).join("") || '<p style="color:var(--muted)">No tests match.</p>'}
       <div class="foot"></div></main></div>`;
+    if (active) { const q = $("#q"); q.focus(); q.setSelectionRange(active[0], active[1]); }
   }
+
+  function jump(name) {
+    st.open.add(name); st.filter = "all"; st.view = "tests"; st.collapsed.clear(); render();
+    document.getElementById(encodeURIComponent(name))?.scrollIntoView({ block: "center" });
+  }
+
+  async function rerun(mode) {
+    st.busy = true; render();
+    try {
+      const r = await fetch("api/rerun", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "e2e-dashboard" }, body: JSON.stringify({ mode }) });
+      const body = await r.json().catch(() => ({}));
+      if (r.status === 409) return toast("Another run is in progress");
+      if (!r.ok) return toast(body.error || "Could not start the run (" + r.status + ")");
+      if (parent !== window) parent.postMessage({ source: "e2e-dashboard", type: "run-started", runId: body.runId }, "*");
+      location.href = body.url;
+    } catch { toast("Could not start the run"); } finally { st.busy = false; render(); }
+  }
+
   app.addEventListener("click", (e) => {
-    const el = e.target.closest("[data-copy],[data-link],[data-filter],[data-cat],[data-view],[data-toggle],[data-group],[data-test],[data-jump],#theme,#expand,#collapse");
-    if (!el) return;
+    const el = e.target.closest("[data-copy],[data-link],[data-rerun],[data-filter],[data-cat],[data-view],[data-toggle],[data-group],[data-test],[data-jump],#theme,#expand,#collapse");
+    if (!el || el.disabled) return;
     const d = el.dataset;
-    if (d.copy !== undefined) return copy(d.copy, d.msg);
-    if (d.link !== undefined) { const a = document.createElement("a"); a.href = d.link; a.download = "screenshot.svg"; a.click(); return; }
+    if (d.copy !== undefined) return void copy(d.copy, d.msg);
+    if (d.rerun) return void rerun(d.rerun);
+    if (d.link !== undefined) {
+      const ext = (/^data:image\/(\w+)/.exec(d.link)?.[1] ?? d.link.split(/[?#]/)[0].split(".").pop() ?? "png").replace("svg+xml", "svg");
+      const a = document.createElement("a"); a.href = d.link; a.download = `${d.name || "screenshot"}.${ext}`; a.click(); return;
+    }
+    if (d.jump) return jump(d.jump);
     if (d.filter) st.filter = d.filter; else if (d.cat !== undefined) st.cat = st.cat === d.cat ? null : d.cat;
     else if (d.view) st.view = d.view; else if (d.toggle) st[d.toggle] = !st[d.toggle];
     else if (d.group) st.collapsed.has(d.group) ? st.collapsed.delete(d.group) : st.collapsed.add(d.group);
-    else if (d.test) st.open.has(d.test) ? st.open.delete(d.test) : st.open.add(d.test);
-    else if (d.jump) { st.open.add(d.jump); st.filter = "all"; render(); return document.getElementById(encodeURIComponent(d.jump))?.scrollIntoView({ block: "center" }); }
+    else if (d.test) { if (d.status === "queued" || d.status === "running") return; st.open.has(d.test) ? st.open.delete(d.test) : st.open.add(d.test); }
     else if (el.id === "theme") { st.theme = st.theme === "dark" ? "light" : "dark"; localStorage.theme = st.theme; }
-    else if (el.id === "expand") visible().forEach((t) => st.open.add(t.name)); else if (el.id === "collapse") st.open.clear();
+    else if (el.id === "expand") visible(model()).forEach((t) => st.open.add(t.name)); else if (el.id === "collapse") st.open.clear();
     render();
   });
-  app.addEventListener("input", (e) => { if (e.target.id === "q") { st.q = e.target.value; const p = e.target.selectionStart; render(); const q = $("#q"); q.focus(); q.setSelectionRange(p, p); } });
+  app.addEventListener("input", (e) => { if (e.target.id === "q") { st.q = e.target.value; render(); } });
   let fi = -1;
   addEventListener("keydown", (e) => {
-    if (e.target.tagName === "INPUT") return;
-    if (e.key === "/") { e.preventDefault(); $("#q").focus(); }
-    if ((e.key === "j" || e.key === "k") && failed.length) {
-      fi = (fi + (e.key === "j" ? 1 : -1) + failed.length) % failed.length; st.open.add(failed[fi].name); st.filter = "all"; render();
-      document.getElementById(encodeURIComponent(failed[fi].name))?.scrollIntoView({ block: "center" });
-    }
+    if (e.target.tagName === "INPUT" || !data || phase === "starting" || phase === "empty") return;
+    if (e.key === "/") { e.preventDefault(); $("#q")?.focus(); }
+    const failed = model().failed;
+    if ((e.key === "j" || e.key === "k") && failed.length) { fi = (fi + (e.key === "j" ? 1 : -1) + failed.length) % failed.length; jump(failed[fi].name); }
   });
-  render();
+
+  (async function loop(first) {
+    await refresh();
+    render();
+    if (first && location.hash.length > 1 && data) jump(decodeURIComponent(location.hash.slice(1)));
+    if (phase === "live" || phase === "starting") setTimeout(() => loop(false), POLL_MS);
+  })(true);
 })();
 </script>
 </body>

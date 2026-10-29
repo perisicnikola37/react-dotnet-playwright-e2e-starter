@@ -1,23 +1,43 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createAutomatedTestsClient, RunConflictError, type AutomatedTestsClient, type RunInfo } from "./client";
 
 export interface AutomatedTestsPageProps {
-  /** Use your own client (custom fetch / auth); otherwise one is created from `baseUrl`. */
+  /** Use your own client (auth, custom origin); otherwise one is created from `baseUrl`. */
   client?: AutomatedTestsClient;
   baseUrl?: string;
+  /** Page heading. */
+  title?: string;
   /** Categories that get a "Run" button next to "Run all". */
   categories?: string[];
-  /** How often to refresh while a run is in progress. */
+  /** How often the run list refreshes while a run is in progress. The dashboard itself updates live. */
   pollMs?: number;
+  /** Height of the dashboard iframe. */
+  height?: string | number;
 }
 
 const colors = { passed: "#16a34a", failed: "#dc2626", error: "#dc2626", running: "#2563eb" } as const;
 
-export function AutomatedTestsPage({ client, baseUrl, categories = ["Smoke", "Regression"], pollMs = 2000 }: AutomatedTestsPageProps) {
+function summary(run: RunInfo) {
+  if (run.status === "running") return "Running… the dashboard below updates live.";
+  if (run.status === "error") return "The run ended without results. Check the runner log.";
+  return `${run.status}: ${run.passed ?? 0} passed, ${run.failed ?? 0} failed, ${run.skipped ?? 0} skipped`;
+}
+
+export function AutomatedTestsPage({
+  client,
+  baseUrl,
+  title = "Automated tests",
+  categories = ["Smoke", "Regression"],
+  pollMs = 3000,
+  height = "80vh",
+}: AutomatedTestsPageProps) {
   const api = useMemo(() => client ?? createAutomatedTestsClient({ baseUrl }), [client, baseUrl]);
   const [runs, setRuns] = useState<RunInfo[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [frameUrl, setFrameUrl] = useState<string | null>(null);
+  const [logUrl, setLogUrl] = useState<string | null>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -40,6 +60,38 @@ export function AutomatedTestsPage({ client, baseUrl, categories = ["Smoke", "Re
     return () => clearInterval(timer);
   }, [running, refresh, pollMs]);
 
+  // The dashboard follows a run live, so it is shown from the moment the run starts.
+  useEffect(() => {
+    if (!selected) return;
+    let cancelled = false;
+    setFrameUrl(null);
+    setLogUrl(null);
+    Promise.all([api.dashboardUrl(selected), api.logUrl(selected)]).then(
+      ([dashboard, log]) => {
+        if (cancelled) return;
+        setFrameUrl(dashboard);
+        setLogUrl(log);
+      },
+      (e: Error) => !cancelled && setMessage(e.message),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [api, selected]);
+
+  // "Re-run" inside the dashboard starts a run and tells this page, so the list and the selection follow.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== frame.current?.contentWindow) return;
+      const data = event.data as { source?: string; type?: string; runId?: string } | null;
+      if (data?.source !== "e2e-dashboard" || data.type !== "run-started" || !data.runId) return;
+      setSelected(data.runId);
+      void refresh();
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [refresh]);
+
   const start = async (category?: string) => {
     setMessage(null);
     try {
@@ -55,7 +107,7 @@ export function AutomatedTestsPage({ client, baseUrl, categories = ["Smoke", "Re
 
   return (
     <section data-testid="automated-tests" style={{ fontFamily: "system-ui, sans-serif" }}>
-      <h1>Automated tests</h1>
+      <h1>{title}</h1>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
         <button type="button" disabled={running} onClick={() => void start()}>
           Run all
@@ -70,32 +122,39 @@ export function AutomatedTestsPage({ client, baseUrl, categories = ["Smoke", "Re
             <option key={r.id} value={r.id}>
               {r.id} · {r.status}
               {r.category ? ` · ${r.category}` : ""}
+              {r.tests?.length ? ` · ${r.tests.length} selected` : ""}
             </option>
           ))}
         </select>
       </div>
 
-      {message && <p role="alert" style={{ color: colors.failed }}>{message}</p>}
+      {message && (
+        <p role="alert" style={{ color: colors.failed }}>
+          {message}
+        </p>
+      )}
       {current && (
         <p data-testid="run-status" style={{ color: colors[current.status] }}>
-          {current.status === "running"
-            ? "Running…"
-            : `${current.status}: ${current.passed ?? 0} passed, ${current.failed ?? 0} failed, ${current.skipped ?? 0} skipped`}
-          {current.status === "error" && (
+          {summary(current)}
+          {current.status === "error" && logUrl && (
             <>
               {" "}
-              <a href={api.logUrl(current.id)} target="_blank" rel="noreferrer">runner log</a>
+              <a href={logUrl} target="_blank" rel="noreferrer">
+                runner log
+              </a>
             </>
           )}
         </p>
       )}
 
-      {current && current.status !== "running" && current.status !== "error" ? (
+      {current && frameUrl ? (
         <iframe
-          key={`${current.id}-${current.finishedAt}`}
+          ref={frame}
+          key={current.id}
           title="Test run dashboard"
-          src={api.viewUrl(current.id)}
-          style={{ width: "100%", height: "80vh", border: "1px solid #dde1e7", borderRadius: 8 }}
+          src={frameUrl}
+          referrerPolicy="no-referrer"
+          style={{ width: "100%", height, border: "1px solid #dde1e7", borderRadius: 8 }}
         />
       ) : (
         !current && <p>No runs yet. Start one above.</p>

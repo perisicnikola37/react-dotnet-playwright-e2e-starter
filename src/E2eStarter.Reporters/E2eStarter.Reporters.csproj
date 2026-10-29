@@ -6,8 +6,8 @@
     <PackageId>E2eStarter.Reporters</PackageId>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>e2e-report</ToolCommandName>
-    <Description>dotnet tool that turns a TRX test report plus failure evidence into a data.json, a live dashboard (index.html) and a standalone report.html.</Description>
-    <PackageTags>playwright;e2e;testing;xunit;test-report;dashboard;trx</PackageTags>
+    <Description>dotnet tool that turns a TRX test result plus Playwright failure evidence into a data.json, a live test dashboard (index.html) and a standalone HTML report (report.html).</Description>
+    <PackageTags>playwright;playwright-report;test-report;html-report;trx;xunit;e2e;test-dashboard;dotnet-tool</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

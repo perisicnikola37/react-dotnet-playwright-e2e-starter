@@ -1,3 +1,4 @@
+using System.Text.Json;
 using E2eStarter.Playwright.Configuration;
 using Microsoft.Playwright;
 using Xunit;
@@ -5,13 +6,16 @@ using Xunit;
 namespace E2eStarter.Playwright.Infrastructure;
 
 // Base class for UI tests. Every test gets a fresh browser context (isolated cookies and storage) and a trace.
-// On failure the trace, a screenshot and the page HTML are kept under artifacts/{runId}/{test}/; passing tests leave nothing.
+// On failure the screenshot, page HTML, URL, trace, browser console errors and the named steps are kept under
+// artifacts/{runId}/{test}/; passing tests leave nothing.
 [Collection(CollectionName)]
 public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
 {
     public const string CollectionName = "Browser";
 
     private readonly List<Func<Task>> _cleanups = [];
+    private readonly List<string> _console = [];
+    private readonly List<string> _steps = [];
     private IBrowserContext _context = null!;
 
     protected TestSettings Settings => suite.Settings;
@@ -34,7 +38,27 @@ public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
         }
 
         Page = await _context.NewPageAsync();
+        Page.Console += (_, message) =>
+        {
+            if (message.Type is "error" or "warning")
+            {
+                lock (_console)
+                {
+                    _console.Add($"[{message.Type}] {message.Text}");
+                }
+            }
+        };
+        Page.PageError += (_, error) =>
+        {
+            lock (_console)
+            {
+                _console.Add($"[pageerror] {error}");
+            }
+        };
     }
+
+    // Names what the test is doing; on failure the dashboard lists the steps and marks the last one as failed.
+    protected void Step(string description) => _steps.Add(description);
 
     // Registers test-data cleanup; it runs after the failure evidence is captured, in reverse order.
     protected void AfterTest(Func<Task> cleanup) => _cleanups.Add(cleanup);
@@ -42,42 +66,57 @@ public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
     public virtual async ValueTask DisposeAsync()
     {
         var failed = TestContext.Current.TestState?.Result == TestResult.Failed;
-        var folder = Path.Combine(suite.ArtifactsRoot, SanitizeFileName(TestContext.Current.Test?.TestDisplayName ?? "test"));
+        var folder = RunArtifacts.FolderFor(Settings, TestContext.Current.Test?.TestDisplayName ?? "test");
 
         if (failed)
         {
             Directory.CreateDirectory(folder);
-            await Page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(folder, "screenshot.png"), FullPage = true });
-            await File.WriteAllTextAsync(Path.Combine(folder, "page.html"), await Page.ContentAsync());
-            await File.WriteAllTextAsync(Path.Combine(folder, "url.txt"), Page.Url);
+            await TryAsync(() => Page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(folder, RunArtifacts.Screenshot), FullPage = true }));
+            await TryAsync(async () => await File.WriteAllTextAsync(Path.Combine(folder, RunArtifacts.PageHtml), await Page.ContentAsync()));
+            await File.WriteAllTextAsync(Path.Combine(folder, RunArtifacts.Url), Page.Url);
+
+            string[] console;
+            lock (_console)
+            {
+                console = [.. _console];
+            }
+
+            if (console.Length > 0)
+            {
+                await File.WriteAllTextAsync(Path.Combine(folder, RunArtifacts.Console), JsonSerializer.Serialize(console));
+            }
+
+            if (_steps.Count > 0)
+            {
+                await File.WriteAllTextAsync(Path.Combine(folder, RunArtifacts.Steps), JsonSerializer.Serialize(_steps));
+            }
         }
 
         for (var i = _cleanups.Count - 1; i >= 0; i--)
         {
-            try
-            {
-                await _cleanups[i]();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Cleanup failed: {ex.Message}");
-            }
+            await TryAsync(_cleanups[i], "Cleanup");
         }
 
         if (Settings.Artifacts.Trace)
         {
             await _context.Tracing.StopAsync(failed
-                ? new TracingStopOptions { Path = Path.Combine(folder, "trace.zip") }
+                ? new TracingStopOptions { Path = Path.Combine(folder, RunArtifacts.Trace) }
                 : new TracingStopOptions());
         }
 
         await _context.CloseAsync();
     }
 
-    private static string SanitizeFileName(string name)
+    // Evidence and cleanup are best effort: a crashed page must not hide the original test failure.
+    private static async Task TryAsync(Func<Task> action, string what = "Capturing evidence")
     {
-        var invalid = Path.GetInvalidFileNameChars();
-        var cleaned = new string(name.Select(c => invalid.Contains(c) || c == ' ' ? '_' : c).ToArray());
-        return cleaned.Length > 100 ? cleaned[..100] : cleaned;
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"{what} failed: {ex.Message}");
+        }
     }
 }

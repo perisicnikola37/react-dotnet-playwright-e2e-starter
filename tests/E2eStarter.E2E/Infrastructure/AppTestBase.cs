@@ -1,4 +1,8 @@
 using E2eStarter.Playwright.Infrastructure;
+using E2eStarter.Playwright.Reporting;
+
+// Streams progress to E2E_LiveEventsPath so the dashboard can follow a run live; a no-op when that is not set.
+[assembly: TestFramework(typeof(LiveProgressTestFramework))]
 
 namespace E2eStarter.E2E.Infrastructure;
 

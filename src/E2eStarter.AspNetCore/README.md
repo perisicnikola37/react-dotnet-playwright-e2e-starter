@@ -1,27 +1,28 @@
 # E2eStarter.AspNetCore
 
-Endpoints that start automated UI test runs from your ASP.NET Core API, list them, and serve each run's dashboard and evidence.
+Add a **Playwright test dashboard** to your ASP.NET Core API: endpoints that start UI test runs from the browser, follow them live, re-run failed tests and serve the dashboard and evidence of every run. Use it with the React page `@perisicnikola37/e2e-starter-react`.
 
 ```bash
 dotnet add package E2eStarter.AspNetCore
 ```
 
 ```csharp
-builder.Services.AddAutomatedTests(o =>
-{
-    o.Enabled = !builder.Environment.IsProduction();   // never run tests in Production
-    o.Command = "scripts/run-ci.sh";                   // called as: run-ci.sh <runFolder> [category]
-});
-
-app.MapAutomatedTests().RequireAuthorization();        // optional: lock the endpoints
+builder.Services.AddAutomatedTests(builder.Configuration.GetSection("AutomatedTests"));
+app.MapAutomatedTests().RequireAuthorization();   // /api/automated-tests
 ```
+
+Nothing is mapped in the `Production` environment unless `AllowInProduction` is `true`.
 
 | Method | Path | Result |
 |---|---|---|
-| `POST` | `/api/automated-tests/runs` | start a run (`{ "category": "Smoke" }`), `202`; `409` while another run is in progress |
-| `GET` | `/api/automated-tests/runs` | all runs, newest first |
-| `GET` | `/api/automated-tests/runs/{id}` | one run |
-| `GET` | `/api/automated-tests/runs/{id}/log` | runner output |
-| `GET` | `/api/automated-tests/runs/{id}/files/{path}` | files of the run folder (`index.html`, `data.json`, evidence) |
+| `POST` | `/runs` | start a run (`{ "category": "Smoke" }` or `{ "tests": [...] }`), `202`; `409` while a run is in progress |
+| `GET` | `/runs` | recent runs, newest first |
+| `GET` | `/runs/{id}` | one run |
+| `POST` | `/runs/{id}/rerun` | `{ "mode": "all" \| "failed" \| "same" }` |
+| `GET` | `/runs/{id}/log` | runner output |
+| `POST` | `/dashboard-token` | short-lived token for the dashboard iframe |
+| `GET` | `/dashboard/{token}/{id}/{path}` | dashboard and files of the run (sandboxed) |
 
-Pair it with `E2eStarter.Reporters` (writes the run folder) and `@perisicnikola37/e2e-starter-react` (the page). See the [repository README](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter).
+Options: `Enabled`, `AllowInProduction`, `RunsDirectory`, `Command` (default `scripts/run-ci.sh`, called as `Command <runFolder> [category]`), `WorkingDirectory`, `Timeout`, `Title`, `MaxRuns`, `DashboardTokenLifetime`, `Environment`.
+
+Full setup: <https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter>.

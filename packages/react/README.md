@@ -1,6 +1,8 @@
 # @perisicnikola37/e2e-starter-react
 
-A drop-in React page that starts automated UI test runs, lists them and shows the live dashboard of the selected run in an iframe. It talks to the endpoints of `E2eStarter.AspNetCore`.
+Add a **Playwright test dashboard** to your React app: a drop-in page that starts UI test runs, lists them and shows the live dashboard of the selected run, with re-run of failed tests, screenshots, steps and traces. It talks to the endpoints of `E2eStarter.AspNetCore`.
+
+[Live demo of the dashboard](https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/demo/)
 
 ```bash
 npm install @perisicnikola37/e2e-starter-react
@@ -13,6 +15,17 @@ import { AutomatedTestsPage } from "@perisicnikola37/e2e-starter-react";
 <AutomatedTestsPage categories={["Smoke", "Regression"]} />
 ```
 
-Use `createAutomatedTestsClient({ baseUrl, prefix, fetch })` for a custom origin or authentication. React 18+ is a peer dependency.
+Props: `client`, `baseUrl`, `title`, `categories`, `pollMs` (default 3000), `height` (default `80vh`).
+
+For a custom origin or authentication, pass a client:
+
+```tsx
+import { AutomatedTestsPage, createAutomatedTestsClient } from "@perisicnikola37/e2e-starter-react";
+
+const client = createAutomatedTestsClient({ baseUrl: "https://api.example.test", getAccessToken: () => getToken() });
+<AutomatedTestsPage client={client} />
+```
+
+The client also has `listRuns`, `getRun`, `startRun`, `rerun`, `issueDashboardToken`, `dashboardUrl` and `logUrl`. React 18+ is a peer dependency.
 
 See the [repository README](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter) for the full setup.

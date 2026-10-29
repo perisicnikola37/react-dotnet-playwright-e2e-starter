@@ -17,7 +17,7 @@ jobs:
     name: Build and test (npm)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
@@ -29,19 +29,17 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Build (client package, then web app)
+      - name: Build (packages, then web app)
         run: npm run build
 
-      - name: Test the client package
-        run: |
-          npm test --workspace packages/api-client
-          npm test --workspace packages/react
+      - name: Test the React package
+        run: npm test --workspace packages/react
 
   dotnet:
     name: Build and test (.NET)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -55,10 +53,13 @@ jobs:
           dotnet list E2eStarter.sln package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt
           ! grep -q "has the following vulnerable packages" vulnerable.txt
 
-      - name: Test the API
-        run: dotnet test --project tests/E2eStarter.Api.Tests -c Release --no-build
+      - name: Unit and integration tests
+        run: |
+          dotnet test --project tests/E2eStarter.Api.Tests -c Release --no-build
+          dotnet test --project tests/E2eStarter.AspNetCore.Tests -c Release --no-build
+          dotnet test --project tests/E2eStarter.Reporters.Tests -c Release --no-build
 
-      - name: Pack the NuGet package (dry run)
+      - name: Pack the NuGet packages (dry run)
         run: |
           dotnet pack src/E2eStarter.Playwright -c Release --no-build -o artifacts/nuget
           dotnet pack src/E2eStarter.Reporters -c Release --no-build -o artifacts/nuget
