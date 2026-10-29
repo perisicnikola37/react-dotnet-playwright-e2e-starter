@@ -1,10 +1,11 @@
 using E2eStarter.E2E.Infrastructure;
 using E2eStarter.E2E.Pages;
+using E2eStarter.Playwright.Infrastructure;
 
 namespace E2eStarter.E2E.Tests.Regression;
 
 [Trait(TestCategories.Key, TestCategories.Regression)]
-public sealed class ItemsTests(SuiteFixture suite) : UiTestBase(suite)
+public sealed class ItemsTests(SuiteFixture suite) : AppTestBase(suite)
 {
     // Names are unique per test, so a leftover from a crashed run never collides with a later one.
     private static string UniqueName(string prefix) => $"{prefix} {Guid.NewGuid():N}"[..28];

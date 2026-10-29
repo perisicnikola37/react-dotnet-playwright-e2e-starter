@@ -1,10 +1,11 @@
 using E2eStarter.E2E.Infrastructure;
 using E2eStarter.E2E.Pages;
+using E2eStarter.Playwright.Infrastructure;
 
 namespace E2eStarter.E2E.Tests.Smoke;
 
 [Trait(TestCategories.Key, TestCategories.Smoke)]
-public sealed class AppLoadsTests(SuiteFixture suite) : UiTestBase(suite)
+public sealed class AppLoadsTests(SuiteFixture suite) : AppTestBase(suite)
 {
     [Fact]
     public async Task The_items_page_loads_with_its_heading()

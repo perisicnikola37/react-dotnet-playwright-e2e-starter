@@ -1,13 +1,16 @@
-using E2eStarter.E2E.Configuration;
+using E2eStarter.Playwright.Configuration;
 using Microsoft.Playwright;
+using Xunit;
 
-namespace E2eStarter.E2E.Infrastructure;
+namespace E2eStarter.Playwright.Infrastructure;
 
 // Base class for UI tests. Every test gets a fresh browser context (isolated cookies and storage) and a trace.
 // On failure the trace, a screenshot and the page HTML are kept under artifacts/{runId}/{test}/; passing tests leave nothing.
-[Collection(BrowserCollection.Name)]
+[Collection(CollectionName)]
 public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
 {
+    public const string CollectionName = "Browser";
+
     private readonly List<Func<Task>> _cleanups = [];
     private IBrowserContext _context = null!;
 
@@ -15,12 +18,8 @@ public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
 
     protected IPage Page { get; private set; } = null!;
 
-    // Lives until after the cleanups ran, so AfterTest callbacks can use it.
-    protected ApiClient Api { get; private set; } = null!;
-
-    public async ValueTask InitializeAsync()
+    public virtual async ValueTask InitializeAsync()
     {
-        Api = new ApiClient(Settings);
         _context = await suite.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = Settings.BaseUrl,
@@ -40,7 +39,7 @@ public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
     // Registers test-data cleanup; it runs after the failure evidence is captured, in reverse order.
     protected void AfterTest(Func<Task> cleanup) => _cleanups.Add(cleanup);
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         var failed = TestContext.Current.TestState?.Result == TestResult.Failed;
         var folder = Path.Combine(suite.ArtifactsRoot, SanitizeFileName(TestContext.Current.Test?.TestDisplayName ?? "test"));
@@ -73,7 +72,6 @@ public abstract class UiTestBase(SuiteFixture suite) : IAsyncLifetime
         }
 
         await _context.CloseAsync();
-        Api.Dispose();
     }
 
     private static string SanitizeFileName(string name)

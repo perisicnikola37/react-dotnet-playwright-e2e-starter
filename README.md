@@ -1,94 +1,136 @@
+<div align="center">
+
 # React + .NET + Playwright E2E Starter
 
-A production-style **end-to-end testing starter** for a **React** frontend and an **ASP.NET Core (.NET 10)** API, using **Playwright for .NET** and **xUnit v3**. Clone it, swap the sample "Items" app for your own, and keep a working test framework: page objects, per-test browser isolation, API-based test data, failure evidence and CI.
+**A production-ready, domain-agnostic starter for end-to-end testing a React app and an ASP.NET Core API with Playwright for .NET and xUnit v3.**
 
+[![CI](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/ci.yml)
 [![E2E](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/e2e.yml/badge.svg)](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/e2e.yml)
+[![CodeQL](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/codeql.yml/badge.svg)](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Features
+<img src="docs/preview.png" alt="Sample Items app under test" width="620" />
 
-- **Playwright (C#)** with auto-waiting locators; Chromium, Firefox, WebKit, or system Chrome / Edge.
-- **Page Object Model**: locators stay private in `Pages/`, tests read as user intent.
-- **Isolated tests**: a fresh browser context per test; data is seeded and cleaned up through the API (`ApiClient`, `AfterTest`).
-- **Failure evidence**: screenshot, page HTML, URL and a Playwright **trace** per failed test. Passing tests leave nothing.
-- **Test categories** (`Smoke`, `Regression`) via xUnit traits.
-- **Layered configuration**: `appsettings.json`, optional `appsettings.{E2E_ENVIRONMENT}.json`, then `E2E_*` environment variables.
-- **One-command runner** (`scripts/run-e2e.sh`) that starts the API and the web app, waits for them, runs the tests and stops everything.
-- **GitHub Actions** workflow that builds, runs the tests and uploads evidence on failure.
+</div>
+
+## Contents
+
+- [Why](#why)
+- [Packages](#packages)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Installing the packages](#installing-the-packages)
+- [Configuration](#configuration)
+- [Project structure](#project-structure)
+- [Releasing](#releasing)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why
+
+- **Page objects + isolated tests**: every test gets its own browser context, with a trace.
+- **Failure evidence**: screenshot, `page.html`, URL and `trace.zip` are saved when a test fails.
+- **Categories**: `Smoke` and `Regression`, filterable from the CLI and CI.
+- **Self-contained data**: tests create and remove their data through the API.
+- **One command**: `scripts/run-e2e.sh` starts the API and the web app, runs the tests and cleans up.
+- **Reusable infrastructure** published as a NuGet package, plus a typed npm API client.
+
+## Packages
+
+| Package | Registry | Description |
+| --- | --- | --- |
+| `E2eStarter.Playwright` | NuGet (GitHub Packages) | Settings loader, suite fixture and base test class for Playwright .NET + xUnit v3 |
+| `@perisicnikola37/e2e-starter-client` | npm (GitHub Packages) | Typed client for the sample Items API |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  T[tests/E2eStarter.E2E<br/>xUnit v3 + Playwright] -->|drives browser| W[src/web<br/>React 19 + Vite :5180]
+  T -->|seeds / cleans data| A[src/E2eStarter.Api<br/>ASP.NET Core :5080]
+  W -->|uses| C[packages/api-client]
+  C -->|HTTP| A
+  T -.uses.-> L[src/E2eStarter.Playwright<br/>NuGet library]
+```
 
 ## Quick start
 
-Requirements: .NET 10 SDK, Node.js 22+, and a browser (Playwright's Chromium or system Chrome).
+Requirements: .NET 10 SDK, Node.js 22+, PowerShell (`pwsh`) for the browser install.
 
 ```bash
-# 1. Install web dependencies
-npm ci --prefix src/web
-
-# 2. Build, then install Playwright's browser once
-dotnet build
-pwsh tests/E2eStarter.E2E/bin/Debug/net10.0/playwright.ps1 install chromium   # or: --browser chrome to use installed Chrome
-
-# 3. Run everything (starts API + web app for you)
-scripts/run-e2e.sh
-scripts/run-e2e.sh --category Smoke --headed
-scripts/run-e2e.sh --browser chrome
-```
-
-Ports: API `5080`, web `5180`. The script refuses to run if something already answers there, so tests never hit the wrong app.
-
-Run against an app you already started (`dotnet run --project src/Api`, `npm run dev --prefix src/web`):
-
-```bash
-dotnet test --project tests/E2eStarter.E2E
+npm ci
+dotnet build E2eStarter.sln
+pwsh tests/E2eStarter.E2E/bin/Debug/net10.0/playwright.ps1 install chromium
+scripts/run-e2e.sh                      # all tests
+scripts/run-e2e.sh --browser chrome     # use the system Chrome
 dotnet test --project tests/E2eStarter.E2E --filter-trait "Category=Smoke"
+dotnet test --project tests/E2eStarter.Api.Tests
 ```
 
-## Project layout
+The script refuses to start if ports `5080` / `5180` are already in use.
 
-```text
-src/Api/                      ASP.NET Core minimal API (in-memory "items" CRUD + /health)
-src/web/                      React 19 + Vite + TypeScript app (the system under test)
-tests/E2eStarter.E2E/
-  Configuration/              typed settings + loader
-  Infrastructure/             SuiteFixture (one browser), UiTestBase (context, trace, evidence), ApiClient, categories
-  Pages/                      page objects
-  Tests/Smoke, Tests/Regression
-scripts/run-e2e.sh            start apps, run tests, clean up
-.github/workflows/e2e.yml     CI
+## Installing the packages
+
+GitHub Packages requires a token with `read:packages`, even for public repositories.
+
+**npm** (`.npmrc`):
+
+```ini
+@perisicnikola37:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+```bash
+npm install @perisicnikola37/e2e-starter-client
+```
+
+**NuGet** (`NuGet.config`):
+
+```xml
+<configuration>
+  <packageSources>
+    <add key="github" value="https://nuget.pkg.github.com/perisicnikola37/index.json" />
+  </packageSources>
+</configuration>
+```
+
+```bash
+dotnet nuget update source github --username <user> --password <token> --store-password-in-clear-text
+dotnet add package E2eStarter.Playwright
 ```
 
 ## Configuration
 
-| Setting | Environment variable | Default |
-| :-- | :-- | :-- |
-| Frontend URL | `E2E_BaseUrl` | `http://localhost:5180/` |
-| API URL | `E2E_ApiBaseUrl` | `http://localhost:5080` |
-| Browser (`Chromium`, `Firefox`, `WebKit`, `chrome`, `msedge`) | `E2E_Browser__Name` | `Chromium` |
-| Headless | `E2E_Browser__Headless` | `true` |
-| Slow motion (ms) | `E2E_Browser__SlowMoMs` | `0` |
-| Default timeout (s) | `E2E_Timeouts__DefaultSeconds` | `10` |
-| Trace every test | `E2E_Artifacts__Trace` | `true` |
-| Environment file (`appsettings.{name}.json`) | `E2E_ENVIRONMENT` | none |
-| Run id (artifact folder) | `E2E_RUN_ID` | timestamp |
+Settings come from `appsettings.json`, overridable with `E2E_`-prefixed environment variables (`__` as the separator).
 
-## Adding a test
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `E2E_BaseUrl` | `http://localhost:5180` | Web app under test |
+| `E2E_ApiBaseUrl` | `http://localhost:5080` | API used for data setup |
+| `E2E_Browser__Name` | `chromium` | `chromium`, `chrome`, `firefox`, `webkit` |
 
-1. Add or extend a page object in `Pages/` (private locators, intent-level methods).
-2. Derive from `UiTestBase`, tag the class with `[Trait(TestCategories.Key, TestCategories.Smoke)]`.
-3. Arrange through `Api`, act through page objects, assert in the test. Register cleanup with `AfterTest(...)`.
+## Project structure
 
-Rules of thumb: everything `async`, no `Thread.Sleep`, no selectors in tests. Prefer locators in this order: role / label, `data-testid`, then CSS.
-
-## Debugging a failure
-
-Failed tests write to `tests/E2eStarter.E2E/bin/<config>/net10.0/artifacts/<runId>/<test>/`: `screenshot.png`, `page.html`, `url.txt`, `trace.zip`.
-
-```bash
-pwsh tests/E2eStarter.E2E/bin/Debug/net10.0/playwright.ps1 show-trace path/to/trace.zip
+```text
+src/
+  E2eStarter.Api/          sample minimal API (in-memory items + /health)
+  E2eStarter.Playwright/   reusable test infrastructure (NuGet)
+  web/                     sample React + Vite app
+packages/api-client/       typed npm client
+tests/
+  E2eStarter.E2E/          page objects + Smoke/Regression tests
+  E2eStarter.Api.Tests/    API integration tests
+scripts/run-e2e.sh         start apps, run tests, clean up
+.github/workflows/         ci, e2e, codeql, commitlint, publish
 ```
 
-## Make it yours
+## Releasing
 
-Replace `src/Api` and `src/web` with your own apps (or point `E2E_BaseUrl` / `E2E_ApiBaseUrl` at a deployed environment), then replace `ItemsPage` and the tests. Never run tests that create or delete data against production.
+Bump the version in `Directory.Build.props` and `packages/api-client/package.json`, update `CHANGELOG.md`, then push a tag `vX.Y.Z`. The **Publish** workflow verifies the versions, publishes both packages and creates the GitHub Release.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [SECURITY.md](SECURITY.md). Commits follow Conventional Commits.
 
 ## License
 

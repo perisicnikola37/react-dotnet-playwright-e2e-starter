@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@perisicnikola37/e2e-starter-client": "^1.0.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

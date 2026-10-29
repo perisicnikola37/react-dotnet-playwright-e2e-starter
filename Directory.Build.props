@@ -1,0 +1,18 @@
+<Project>
+
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Authors>Nikola Perisic</Authors>
+    <Copyright>Copyright (c) 2026 Nikola Perisic</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter</PackageProjectUrl>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

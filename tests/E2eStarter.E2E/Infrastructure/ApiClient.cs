@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using E2eStarter.E2E.Configuration;
+using E2eStarter.Playwright.Configuration;
 
 namespace E2eStarter.E2E.Infrastructure;
 

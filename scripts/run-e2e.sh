@@ -48,7 +48,7 @@ for url in "$API_URL/health" "$WEB_URL"; do
   fi
 done
 
-setsid dotnet run --project "$ROOT/src/Api" >"$ROOT/api.log" 2>&1 &
+setsid dotnet run --project "$ROOT/src/E2eStarter.Api" >"$ROOT/api.log" 2>&1 &
 PIDS+=($!)
 (cd "$ROOT/src/web" && exec setsid npm run dev >"$ROOT/web.log" 2>&1) &
 PIDS+=($!)

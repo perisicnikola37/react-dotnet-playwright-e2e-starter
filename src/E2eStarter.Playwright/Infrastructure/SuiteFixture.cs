@@ -1,9 +1,11 @@
-using E2eStarter.E2E.Configuration;
+using E2eStarter.Playwright.Configuration;
 using Microsoft.Playwright;
+using Xunit;
 
-namespace E2eStarter.E2E.Infrastructure;
+namespace E2eStarter.Playwright.Infrastructure;
 
 // One Playwright driver and one browser for the whole run; each test gets its own isolated context.
+// Register it in the test assembly: [CollectionDefinition(UiTestBase.CollectionName)] class C : ICollectionFixture<SuiteFixture>.
 public sealed class SuiteFixture : IAsyncLifetime
 {
     public TestSettings Settings { get; } = SettingsLoader.Load();
@@ -19,7 +21,7 @@ public sealed class SuiteFixture : IAsyncLifetime
         var runId = Environment.GetEnvironmentVariable("E2E_RUN_ID") ?? DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
         ArtifactsRoot = Path.GetFullPath(Path.Combine(Settings.Artifacts.Directory, runId));
 
-        _playwright = await Playwright.CreateAsync();
+        _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
         var launch = new BrowserTypeLaunchOptions
         {
@@ -50,10 +52,4 @@ public sealed class SuiteFixture : IAsyncLifetime
 
         _playwright?.Dispose();
     }
-}
-
-[CollectionDefinition(Name)]
-public sealed class BrowserCollection : ICollectionFixture<SuiteFixture>
-{
-    public const string Name = "Browser";
 }

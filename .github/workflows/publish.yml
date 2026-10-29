@@ -1,0 +1,80 @@
+name: Publish
+
+# Pushing a v* tag publishes the NuGet and npm packages to GitHub Packages and creates a GitHub Release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: "@perisicnikola37"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Verify the tag matches the package versions
+        if: github.ref_type == 'tag'
+        run: |
+          expected="${GITHUB_REF_NAME#v}"
+          status=0
+          check() {
+            if [ "$2" != "$expected" ]; then
+              echo "::error::$1 is '$2' but the tag is '$GITHUB_REF_NAME'."
+              status=1
+            fi
+          }
+          check Directory.Build.props "$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)"
+          check packages/api-client/package.json "$(node -p "require('./packages/api-client/package.json').version")"
+          exit $status
+
+      - name: Install, build and test
+        run: |
+          npm ci --no-fund
+          npm run build
+          npm test --workspace packages/api-client
+          dotnet build E2eStarter.sln -c Release
+          dotnet test --project tests/E2eStarter.Api.Tests -c Release --no-build
+
+      - name: Pack
+        run: |
+          mkdir -p artifacts/npm artifacts/nuget
+          npm pack --workspace packages/api-client --pack-destination artifacts/npm
+          dotnet pack src/E2eStarter.Playwright -c Release --no-build -o artifacts/nuget
+
+      - name: Publish the npm package
+        run: |
+          for pkg in artifacts/npm/*.tgz; do
+            npm publish "$pkg" --registry https://npm.pkg.github.com
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the NuGet package
+        run: |
+          dotnet nuget push "artifacts/nuget/*.nupkg" \
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
+
+      - name: Create the GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes \
+              artifacts/nuget/*.nupkg artifacts/npm/*.tgz

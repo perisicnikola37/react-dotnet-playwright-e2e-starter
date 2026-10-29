@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace E2eStarter.E2E.Configuration;
+namespace E2eStarter.Playwright.Configuration;
 
 public static class SettingsLoader
 {
@@ -12,7 +12,7 @@ public static class SettingsLoader
 
         var builder = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false);
+            .AddJsonFile("appsettings.json", optional: true);
 
         if (!string.IsNullOrWhiteSpace(environment))
         {

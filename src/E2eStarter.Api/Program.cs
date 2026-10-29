@@ -38,6 +38,9 @@ public sealed record Item(Guid Id, string Name, DateTimeOffset CreatedAt);
 
 public sealed record CreateItem(string? Name);
 
+// Makes the entry point visible to WebApplicationFactory in the API tests.
+public partial class Program;
+
 public sealed class ItemStore
 {
     private readonly ConcurrentDictionary<Guid, Item> _items = new();

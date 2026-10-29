@@ -1,4 +1,4 @@
-namespace E2eStarter.E2E.Infrastructure;
+namespace E2eStarter.Playwright.Infrastructure;
 
 public static class TestCategories
 {

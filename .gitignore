@@ -9,3 +9,7 @@ TestResults/
 .idea/
 .env
 .env.*
+
+artifacts/
+packages/*/dist/
+vulnerable.txt

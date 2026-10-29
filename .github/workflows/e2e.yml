@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   e2e:
+    name: Playwright E2E
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,15 +27,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: src/web/package-lock.json
 
-      - name: Install web dependencies
-        run: npm ci
-        working-directory: src/web
+      - run: npm ci --no-fund
 
-      - name: Typecheck and build the web app
+      - name: Build the client package and the web app
         run: npm run build
-        working-directory: src/web
 
       - name: Build
         run: dotnet build E2eStarter.sln -c Release
@@ -43,7 +40,7 @@ jobs:
         run: pwsh tests/E2eStarter.E2E/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: Run the E2E tests
-        run: scripts/run-e2e.sh
+        run: scripts/run-e2e.sh -- -c Release --no-build
 
       - name: Upload failure evidence
         if: failure()

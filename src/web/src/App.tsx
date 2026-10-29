@@ -1,5 +1,10 @@
+import { createItemsClient, type Item } from "@perisicnikola37/e2e-starter-client";
 import { FormEvent, useEffect, useState } from "react";
-import { createItem, deleteItem, listItems, type Item } from "./api";
+
+const client = createItemsClient();
+const listItems = () => client.list();
+const createItem = (name: string) => client.create(name);
+const deleteItem = (id: string) => client.remove(id);
 
 export function App() {
   const [items, setItems] = useState<Item[] | null>(null);

@@ -1,0 +1,22 @@
+{
+  "name": "react-dotnet-playwright-e2e-starter",
+  "private": true,
+  "version": "1.0.0",
+  "description": "React + ASP.NET Core + Playwright for .NET end-to-end testing starter",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "src/web"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "prepare": "husky",
+    "dev": "npm run dev --workspace src/web",
+    "commitlint": "commitlint --edit"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
+    "husky": "^9.1.7"
+  }
+}
