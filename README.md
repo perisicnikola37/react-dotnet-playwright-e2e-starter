@@ -9,6 +9,8 @@
 [![CodeQL](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/codeql.yml/badge.svg)](https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**[Live demo](https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/)** · **[Automated tests dashboard](https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/#/automated-tests)**
+
 <img src="docs/preview.png" alt="Sample Items app under test" width="620" />
 
 </div>
@@ -16,6 +18,7 @@
 ## Contents
 
 - [Why](#why)
+- [Live demo](#live-demo)
 - [Packages](#packages)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
@@ -34,6 +37,10 @@
 - **Self-contained data**: tests create and remove their data through the API.
 - **One command**: `scripts/run-e2e.sh` starts the API and the web app, runs the tests and cleans up.
 - **Reusable infrastructure** published as a NuGet package, plus a typed npm API client.
+
+## Live demo
+
+Every push to `main` deploys the web app to GitHub Pages with an in-memory fake API (`VITE_DEMO=true`). The **Automated tests** page (`#/automated-tests`) shows a test run with a Smoke/Regression filter, and is itself covered by an E2E test.
 
 ## Packages
 
@@ -121,7 +128,7 @@ tests/
   E2eStarter.E2E/          page objects + Smoke/Regression tests
   E2eStarter.Api.Tests/    API integration tests
 scripts/run-e2e.sh         start apps, run tests, clean up
-.github/workflows/         ci, e2e, codeql, commitlint, publish
+.github/workflows/         ci, e2e, codeql, commitlint, publish, pages (demo)
 ```
 
 ## Releasing

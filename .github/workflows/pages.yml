@@ -1,0 +1,40 @@
+name: Demo
+
+on:
+  push:
+    branches: [main]
+    paths: [src/web/**, packages/api-client/**, .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-fund
+      - run: npm run build -w packages/api-client
+      - run: npm run build -w src/web
+        env:
+          VITE_DEMO: "true"
+          VITE_BASE: /react-dotnet-playwright-e2e-starter/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: src/web/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
