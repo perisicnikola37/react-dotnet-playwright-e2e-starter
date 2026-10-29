@@ -6,6 +6,15 @@ public sealed class TestSettings
 
     public string ApiBaseUrl { get; init; } = "http://localhost:5080";
 
+    // Label shown on the dashboard (E2E_ENVIRONMENT also selects appsettings.{name}.json).
+    public string Environment { get; init; } = "local";
+
+    // Dashboard title of the run.
+    public string Title { get; init; } = "UI tests";
+
+    // events.jsonl for the live dashboard; written only when set and LiveProgressTestFramework is registered.
+    public string? LiveEventsPath { get; init; }
+
     public BrowserSettings Browser { get; init; } = new();
 
     public TimeoutSettings Timeouts { get; init; } = new();

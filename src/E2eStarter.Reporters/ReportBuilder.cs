@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
@@ -15,7 +16,10 @@ public sealed record TestEntry(
     string? Url,
     string? Screenshot,
     string? PageHtml,
-    string? Trace);
+    string? Trace,
+    string[]? Console = null,
+    string[]? Steps = null,
+    int? FailedStep = null);
 
 public sealed record RunReport(
     string Title,
@@ -33,7 +37,8 @@ public sealed class ReportOptions
 
     public required string OutputDirectory { get; init; }
 
-    // Folder with one sub-folder per failed test (screenshot.png, page.html, url.txt, trace.zip), as written by E2eStarter.Playwright.
+    // Folder with one sub-folder per failed test (screenshot.png, page.html, url.txt, trace.zip, console.json, steps.json),
+    // as written by E2eStarter.Playwright. Evidence inside OutputDirectory is referenced in place, anything else is copied.
     public string? ArtifactsDirectory { get; init; }
 
     // data.json of the previous run; enables "new failure" and "still failing".
@@ -47,6 +52,25 @@ public sealed class ReportOptions
 
     public string BaseUrl { get; init; } = "http://localhost:5180";
 }
+
+// File names written by UiTestBase (E2eStarter.Playwright.Infrastructure.RunArtifacts).
+public static class EvidenceFiles
+{
+    public const string Screenshot = "screenshot.png";
+    public const string PageHtml = "page.html";
+    public const string Url = "url.txt";
+    public const string Trace = "trace.zip";
+    public const string Console = "console.json";
+    public const string Steps = "steps.json";
+}
+
+internal sealed record Evidence(
+    string? Url = null,
+    string? Screenshot = null,
+    string? PageHtml = null,
+    string? Trace = null,
+    string[]? Console = null,
+    string[]? Steps = null);
 
 public static class ReportBuilder
 {
@@ -79,24 +103,26 @@ public static class ReportBuilder
             };
             var error = result.Descendants(Ns + "ErrorInfo").FirstOrDefault();
             var evidence = CollectEvidence(options, name);
+            var steps = status == "failed" ? evidence.Steps : null;
 
             tests.Add(new TestEntry(
                 name,
                 categories.GetValueOrDefault((string)result.Attribute("testId")!) ?? [],
                 status,
-                (long)TimeSpan.Parse((string?)result.Attribute("duration") ?? "0:0:0", System.Globalization.CultureInfo.InvariantCulture).TotalMilliseconds,
+                (long)TimeSpan.Parse((string?)result.Attribute("duration") ?? "0:0:0", CultureInfo.InvariantCulture).TotalMilliseconds,
                 previous.Tests.GetValueOrDefault(name),
                 error?.Element(Ns + "Message")?.Value,
                 error?.Element(Ns + "StackTrace")?.Value,
                 evidence.Url,
                 evidence.Screenshot,
                 evidence.PageHtml,
-                evidence.Trace));
+                evidence.Trace,
+                evidence.Console,
+                steps,
+                steps is { Length: > 0 } ? steps.Length - 1 : null));
         }
 
-        var times = doc.Descendants(Ns + "Times").First();
-        var start = DateTimeOffset.Parse((string)times.Attribute("start")!, System.Globalization.CultureInfo.InvariantCulture);
-        var finish = DateTimeOffset.Parse((string)times.Attribute("finish")!, System.Globalization.CultureInfo.InvariantCulture);
+        var (start, finish) = RunTimes(doc);
 
         return new RunReport(
             options.Title,
@@ -109,24 +135,39 @@ public static class ReportBuilder
             tests.OrderBy(t => t.Name, StringComparer.Ordinal).ToList());
     }
 
-    // Copies the evidence of a failed test next to the report and returns paths relative to the run folder.
-    private static (string? Url, string? Screenshot, string? PageHtml, string? Trace) CollectEvidence(ReportOptions options, string testName)
+    // TRX files from some runners have no <Times>; fall back to the first start and last end of the results.
+    private static (DateTimeOffset Start, DateTimeOffset Finish) RunTimes(XDocument doc)
+    {
+        DateTimeOffset? Parse(XElement? element, string attribute) =>
+            DateTimeOffset.TryParse((string?)element?.Attribute(attribute), CultureInfo.InvariantCulture, DateTimeStyles.None, out var value) ? value : null;
+
+        var times = doc.Descendants(Ns + "Times").FirstOrDefault();
+        var results = doc.Descendants(Ns + "UnitTestResult").ToList();
+        var start = Parse(times, "start") ?? results.Select(r => Parse(r, "startTime")).Min() ?? DateTimeOffset.UtcNow;
+        var finish = Parse(times, "finish") ?? results.Select(r => Parse(r, "endTime")).Max() ?? start;
+        return (start, finish < start ? start : finish);
+    }
+
+    // Returns the evidence of a failed test with paths relative to the run folder, copying it there when needed.
+    private static Evidence CollectEvidence(ReportOptions options, string testName)
     {
         if (options.ArtifactsDirectory is null)
         {
-            return default;
+            return new Evidence();
         }
 
-        var source = Path.Combine(options.ArtifactsDirectory, SanitizeFileName(testName));
+        var folderName = SanitizeFileName(testName);
+        var source = Path.GetFullPath(Path.Combine(options.ArtifactsDirectory, folderName));
         if (!Directory.Exists(source))
         {
-            return default;
+            return new Evidence();
         }
 
-        var target = Path.Combine(options.OutputDirectory, "evidence", SanitizeFileName(testName));
+        var output = Path.GetFullPath(options.OutputDirectory) + Path.DirectorySeparatorChar;
+        var target = source.StartsWith(output, StringComparison.Ordinal) ? source : Path.Combine(output, "evidence", folderName);
         Directory.CreateDirectory(target);
 
-        string? Copy(string file)
+        string? Link(string file)
         {
             var from = Path.Combine(source, file);
             if (!File.Exists(from))
@@ -134,12 +175,30 @@ public static class ReportBuilder
                 return null;
             }
 
-            File.Copy(from, Path.Combine(target, file), overwrite: true);
-            return $"evidence/{Uri.EscapeDataString(SanitizeFileName(testName))}/{file}";
+            var to = Path.Combine(target, file);
+            if (to != from)
+            {
+                File.Copy(from, to, overwrite: true);
+            }
+
+            return string.Join('/', Path.GetRelativePath(output, to).Split(Path.DirectorySeparatorChar).Select(Uri.EscapeDataString));
         }
 
-        var urlFile = Path.Combine(source, "url.txt");
-        return (File.Exists(urlFile) ? File.ReadAllText(urlFile).Trim() : null, Copy("screenshot.png"), Copy("page.html"), Copy("trace.zip"));
+        string? Text(string file) => File.Exists(Path.Combine(source, file)) ? File.ReadAllText(Path.Combine(source, file)).Trim() : null;
+
+        string[]? List(string file)
+        {
+            try
+            {
+                return Text(file) is { } json ? JsonSerializer.Deserialize<string[]>(json) : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        return new Evidence(Text(EvidenceFiles.Url), Link(EvidenceFiles.Screenshot), Link(EvidenceFiles.PageHtml), Link(EvidenceFiles.Trace), List(EvidenceFiles.Console), List(EvidenceFiles.Steps));
     }
 
     private static (string? RunId, Dictionary<string, string> Tests) LoadPrevious(string? path)
@@ -156,7 +215,7 @@ public static class ReportBuilder
         return (root.TryGetProperty("runId", out var id) ? id.GetString() : null, tests);
     }
 
-    // Must match the folder naming of UiTestBase in E2eStarter.Playwright.
+    // Must match RunArtifacts.SanitizeFileName in E2eStarter.Playwright.
     public static string SanitizeFileName(string name)
     {
         var invalid = Path.GetInvalidFileNameChars();

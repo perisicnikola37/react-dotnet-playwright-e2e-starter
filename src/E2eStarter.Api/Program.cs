@@ -4,12 +4,11 @@ using E2eStarter.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<ItemStore>();
 builder.Services.AddHealthChecks();
-builder.Services.AddAutomatedTests(o =>
+// Test runs, live dashboard and reports below /api/automated-tests (never mapped in Production).
+builder.Services.AddAutomatedTests(builder.Configuration.GetSection("AutomatedTests"), o =>
 {
-    o.Enabled = !builder.Environment.IsProduction();
-    o.WorkingDirectory = Path.GetFullPath(builder.Configuration["AutomatedTests:WorkingDirectory"] ?? ".", builder.Environment.ContentRootPath);
-    o.Environment["AUTOMATED_TESTS_TITLE"] = "Items app · E2E tests";
-    o.Environment["AUTOMATED_TESTS_ENV"] = builder.Environment.EnvironmentName;
+    o.WorkingDirectory = Path.GetFullPath(o.WorkingDirectory, builder.Environment.ContentRootPath);
+    o.Environment["E2E_ENVIRONMENT"] = builder.Environment.EnvironmentName;
 });
 
 var app = builder.Build();

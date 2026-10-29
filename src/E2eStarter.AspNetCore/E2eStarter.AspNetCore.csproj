@@ -3,14 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>E2eStarter.AspNetCore</PackageId>
-    <Description>ASP.NET Core endpoints to start automated UI test runs, list them and serve their dashboard and evidence: AddAutomatedTests() and MapAutomatedTests().</Description>
-    <PackageTags>playwright;e2e;testing;aspnetcore;test-dashboard;minimal-api</PackageTags>
+    <Description>Add a Playwright test dashboard to your ASP.NET Core API: endpoints to start UI test runs from the browser, follow them live, re-run failed tests and serve the HTML report with screenshots and traces. AddAutomatedTests() + MapAutomatedTests().</Description>
+    <PackageTags>playwright;playwright-dashboard;test-dashboard;e2e;ui-testing;aspnetcore;minimal-api;react;test-automation</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <EmbeddedResource Include="..\..\packages\dashboard\dashboard.html" LogicalName="E2eStarter.AspNetCore.dashboard.html" />
   </ItemGroup>
 
 </Project>

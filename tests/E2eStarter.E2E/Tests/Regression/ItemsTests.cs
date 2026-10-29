@@ -35,13 +35,18 @@ public sealed class ItemsTests(SuiteFixture suite) : AppTestBase(suite)
     [Fact]
     public async Task Adding_a_duplicate_name_is_rejected()
     {
+        Step("Seed an item through the API");
         var name = UniqueName("Duplicate");
         var id = await Api.CreateItemAsync(name);
         AfterTest(() => Api.DeleteItemAsync(id));
+
+        Step("Open the items page");
         var items = await new ItemsPage(Page).OpenAsync();
 
+        Step("Add an item with the same name");
         await items.AddItemAsync(name);
 
+        Step("See the duplicate error");
         (await items.ErrorTextAsync()).ShouldContain("already exists");
     }
 

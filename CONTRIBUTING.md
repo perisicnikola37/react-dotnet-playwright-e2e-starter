@@ -15,9 +15,10 @@ scripts/run-e2e.sh
 
 ## Before you open a pull request
 
-- `npm run build` and `npm test --workspace packages/api-client`
-- `dotnet build E2eStarter.sln` and `dotnet test --project tests/E2eStarter.Api.Tests`
-- `scripts/run-e2e.sh` (full local cycle) and, against a running app, `scripts/run-ci.sh <run folder> [category]` (tests plus `e2e-report`)
+- `npm run build` and `npm test --workspace packages/react`
+- `dotnet build E2eStarter.sln` and the unit tests: `dotnet test --project tests/E2eStarter.Api.Tests`, `tests/E2eStarter.AspNetCore.Tests` and `tests/E2eStarter.Reporters.Tests`
+- `scripts/run-e2e.sh` (full local cycle; add `--report out/report` for the dashboard) and, against a running app, `scripts/run-ci.sh <run folder> [category]` (tests plus `e2e-report`)
+- Changes to `packages/dashboard/dashboard.html`: `dotnet test --project tests/E2eStarter.E2E --filter-trait "Category=Dashboard"` (no app needed)
 
 ## Commit messages and pull request titles
 
@@ -38,7 +39,7 @@ docs: explain StorageState authentication
 
 ## Releasing (maintainers)
 
-1. Bump `<Version>` in `Directory.Build.props` and `version` in every `packages/*/package.json` (api-client, dashboard, react); they must all match.
+1. Bump `<Version>` in `Directory.Build.props` and `version` in every `packages/*/package.json` (dashboard, react); they must all match.
 2. Update `CHANGELOG.md`.
 3. Merge, then tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 

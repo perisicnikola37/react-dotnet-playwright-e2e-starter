@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>E2eStarter.Playwright</PackageId>
-    <Description>Reusable Playwright for .NET test infrastructure for xUnit v3: one browser per run, an isolated context and trace per test, failure evidence (screenshot, HTML, trace) and layered E2E_* configuration.</Description>
-    <PackageTags>playwright;e2e;testing;xunit;test-automation;page-object-model</PackageTags>
+    <Description>Playwright for .NET + xUnit v3 test infrastructure: one browser per run, an isolated context and trace per test, failure evidence (screenshot, HTML, console, steps, trace), live progress events for the test dashboard and layered E2E_* configuration.</Description>
+    <PackageTags>playwright;playwright-dotnet;xunit;xunit-v3;e2e;e2e-testing;ui-testing;test-automation;page-object-model;test-dashboard</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

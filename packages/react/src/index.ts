@@ -4,6 +4,8 @@ export {
   RunConflictError,
   type AutomatedTestsClient,
   type AutomatedTestsClientOptions,
+  type DashboardToken,
+  type RerunMode,
   type RunInfo,
   type RunStatus,
 } from "./client";

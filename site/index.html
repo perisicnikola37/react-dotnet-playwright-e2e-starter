@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playwright test dashboard for React apps · ASP.NET Core + Playwright for .NET starter</title>
+<meta name="description" content="Add a Playwright UI test dashboard to your React app in minutes: start Playwright for .NET tests from the browser, watch them live, re-run failed tests and share HTML reports with screenshots and traces. Free, MIT-licensed starter with NuGet and npm packages.">
+<meta name="keywords" content="playwright dashboard, playwright report, react test dashboard, playwright dotnet, e2e testing, ui testing, xunit, asp.net core, test automation, html test report">
+<link rel="canonical" href="https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#2563eb">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="react-dotnet-playwright-e2e-starter">
+<meta property="og:title" content="Add a Playwright test dashboard to your React app">
+<meta property="og:description" content="Start UI tests from the browser, watch them live, re-run failures and share HTML reports with screenshots and traces. ASP.NET Core + React + Playwright for .NET.">
+<meta property="og:url" content="https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/">
+<meta property="og:image" content="https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Add a Playwright test dashboard to your React app">
+<meta name="twitter:description" content="Start UI tests from the browser, watch them live and share HTML reports with screenshots and traces.">
+<meta name="twitter:image" content="https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/social-preview.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2316a34a'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "react-dotnet-playwright-e2e-starter",
+      "description": "Starter and packages that add a Playwright UI test dashboard to a React app with an ASP.NET Core backend: start Playwright for .NET tests from the browser, follow them live, re-run failed tests and share HTML reports with screenshots and traces.",
+      "url": "https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/",
+      "codeRepository": "https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter",
+      "programmingLanguage": ["C#", "TypeScript"],
+      "runtimePlatform": [".NET 10", "Node.js"],
+      "license": "https://opensource.org/licenses/MIT",
+      "author": { "@type": "Person", "name": "Nikola Perisic", "url": "https://github.com/perisicnikola37" },
+      "keywords": "Playwright, Playwright dashboard, React, ASP.NET Core, xUnit, E2E testing, UI testing, test report"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "How do I add a Playwright test dashboard to my React app?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Add the E2eStarter.AspNetCore package to your ASP.NET Core API and call AddAutomatedTests() and MapAutomatedTests(), then render <AutomatedTestsPage /> from @perisicnikola37/e2e-starter-react on any React route. Testers can start runs, watch them live and open the report from that page." } },
+        { "@type": "Question", "name": "Does it work with Playwright for Node.js (@playwright/test)?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The runner and reporter are built for Playwright for .NET with xUnit v3. The React page and dashboard only need the HTTP endpoints, so another runner can be plugged in, but the starter ships the .NET pieces." } },
+        { "@type": "Question", "name": "Is it safe to expose the dashboard endpoints?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The endpoints are disabled in Production unless you opt in, can be protected with RequireAuthorization, use short-lived dashboard tokens for the iframe, and serve evidence files with a sandbox Content-Security-Policy." } },
+        { "@type": "Question", "name": "Can I share a report without the app running?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every run produces a standalone report.html with screenshots, steps, console output and the Playwright trace, which can be uploaded as a CI artifact or emailed." } }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+:root{--bg:#0b1220;--fg:#e6edf6;--mut:#93a1b5;--card:#121b2d;--line:#22304a;--acc:#3b82f6;--ok:#22c55e;--bad:#ef4444}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+a{color:#8ab4ff}a:hover{color:#fff}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{padding:18px 0;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+header b{font-size:15px}nav a{margin-left:18px;text-decoration:none;color:var(--mut);font-size:14px}nav a:hover{color:#fff}
+.hero{padding:72px 0 40px;text-align:center}
+.hero h1{font-size:clamp(32px,5vw,52px);line-height:1.1;margin:0 0 18px;letter-spacing:-.02em}
+.hero h1 span{color:var(--ok)}
+.hero p{font-size:19px;color:var(--mut);max-width:740px;margin:0 auto 30px}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;padding:12px 22px;border-radius:10px;font-weight:600;text-decoration:none;border:1px solid var(--line)}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}.btn:hover{filter:brightness(1.15);color:#fff}
+.shot{margin:44px auto 0;max-width:960px;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px #0008}
+.shot img{display:block;width:100%;height:auto}
+section{padding:56px 0;border-top:1px solid var(--line)}
+h2{font-size:30px;margin:0 0 8px;letter-spacing:-.01em}.lead{color:var(--mut);margin:0 0 30px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.card h3{margin:0 0 6px;font-size:17px}.card p{margin:0;color:var(--mut);font-size:15px}
+.qs{grid-template-columns:1fr}.step{counter-increment:s}.step h3::before{content:counter(s) ". ";color:var(--acc)}
+pre{background:#060b16;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-size:13.5px;line-height:1.5;margin:12px 0 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}details p{color:var(--mut);margin:10px 0 0}
+table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--mut);font-weight:600}
+footer{padding:30px 0 50px;color:var(--mut);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header><div class="wrap"><b>react-dotnet-playwright-e2e-starter</b>
+<nav aria-label="Main"><a href="#how">How it works</a><a href="#quick-start">Quick start</a><a href="#faq">FAQ</a><a href="demo/">Live demo</a><a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter">GitHub</a></nav></div></header>
+<main>
+<div class="hero wrap">
+  <h1>Add a <span>Playwright test dashboard</span> to your React app</h1>
+  <p>Testers and developers start UI tests from a page in your app, watch every test pass or fail live, re-run the failures with one click and share an HTML report with screenshots, steps and Playwright traces. ASP.NET Core + React + Playwright for .NET + xUnit v3.</p>
+  <div class="cta">
+    <a class="btn p" href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/generate">Use this template</a>
+    <a class="btn" href="demo/">Open the live demo</a>
+    <a class="btn" href="#quick-start">Add it to an existing app</a>
+  </div>
+  <div class="shot"><img src="preview.png" width="1366" height="1500" alt="Playwright test dashboard showing passed and failed UI tests with a screenshot, steps and error of a failed test" loading="eager"></div>
+</div>
+
+<section id="features"><div class="wrap">
+  <h2>Everything a UI test run needs, inside your app</h2>
+  <p class="lead">No separate test server, no CI login for testers. Three packages that plug into the app you already have.</p>
+  <div class="grid">
+    <div class="card"><h3>▶ Start runs from the browser</h3><p>Run all tests or a category (Smoke, Regression) from a React page. Runs are queued, one at a time, with a timeout.</p></div>
+    <div class="card"><h3>⏱ Live progress</h3><p>Each test shows as queued, running, passed or failed while the run is still going, with progress and time spent.</p></div>
+    <div class="card"><h3>🔁 Re-run failed tests</h3><p>Re-run everything, only the failed tests or the same selection from the dashboard with a single click.</p></div>
+    <div class="card"><h3>📸 Failure evidence</h3><p>Screenshot, page HTML, URL, browser console, named steps and the Playwright trace for every failed test.</p></div>
+    <div class="card"><h3>📄 Shareable HTML report</h3><p>Every run writes a standalone report.html you can attach to a CI build, a ticket or an email.</p></div>
+    <div class="card"><h3>🔒 Safe by default</h3><p>Off in Production unless you opt in, works with your auth, short-lived iframe tokens and sandboxed evidence files.</p></div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>How it works</h2>
+  <p class="lead">The React page calls your API, the API runs your Playwright tests and the dashboard follows the run.</p>
+  <table>
+    <tr><th>Package</th><th>Where</th><th>What it does</th></tr>
+    <tr><td><code>E2eStarter.Playwright</code></td><td>Your UI test project (NuGet)</td><td>Playwright + xUnit v3 base classes: one browser per run, a context and trace per test, failure evidence, live progress events.</td></tr>
+    <tr><td><code>E2eStarter.AspNetCore</code></td><td>Your ASP.NET Core API (NuGet)</td><td><code>AddAutomatedTests()</code> + <code>MapAutomatedTests()</code>: start, list, re-run and serve runs and dashboards.</td></tr>
+    <tr><td><code>E2eStarter.Reporters</code></td><td>dotnet tool</td><td>Turns the TRX result and evidence into <code>data.json</code>, the dashboard and <code>report.html</code>.</td></tr>
+    <tr><td><code>@perisicnikola37/e2e-starter-react</code></td><td>Your React app (npm)</td><td><code>&lt;AutomatedTestsPage /&gt;</code>: start runs, see history and the live dashboard.</td></tr>
+  </table>
+</div></section>
+
+<section id="quick-start"><div class="wrap">
+  <h2>Quick start</h2>
+  <p class="lead">Already have a React app with an ASP.NET Core backend? Three steps. Starting from scratch? <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/generate">Use the template</a>.</p>
+  <div class="grid qs">
+    <div class="card step"><h3>Write UI tests</h3><p>Reference <code>E2eStarter.Playwright</code> and inherit from <code>UiTestBase</code>.</p>
+<pre><code>public sealed class ItemsTests(SuiteFixture suite)
+    : UiTestBase(suite)
+{
+    [Fact]
+    public async Task Adds_an_item()
+    {
+        Step("Open the page");
+        await Page.GotoAsync("/");
+        // ...
+    }
+}</code></pre></div>
+    <div class="card step"><h3>Add the API endpoints</h3><p>Reference <code>E2eStarter.AspNetCore</code> in your API.</p>
+<pre><code>builder.Services.AddAutomatedTests(
+    builder.Configuration.GetSection("AutomatedTests"));
+
+app.MapAutomatedTests(); // /api/automated-tests</code></pre></div>
+    <div class="card step"><h3>Add the React page</h3><p>Install <code>@perisicnikola37/e2e-starter-react</code>.</p>
+<pre><code>import { AutomatedTestsPage } from
+  "@perisicnikola37/e2e-starter-react";
+
+&lt;Route path="/tests"
+  element={&lt;AutomatedTestsPage /&gt;} /&gt;</code></pre></div>
+  </div>
+  <p style="margin-top:22px">Full guide, configuration and CI setup: <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter#readme">README on GitHub</a>.</p>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>FAQ</h2>
+  <details><summary>How do I add a Playwright test dashboard to my React app?</summary><p>Add <code>E2eStarter.AspNetCore</code> to your ASP.NET Core API, call <code>AddAutomatedTests()</code> and <code>MapAutomatedTests()</code>, then render <code>&lt;AutomatedTestsPage /&gt;</code> on any React route. Testers can start runs, watch them live and open the report from that page.</p></details>
+  <details><summary>Does it work with Playwright for Node.js (@playwright/test)?</summary><p>The runner and reporter are built for Playwright for .NET with xUnit v3. The React page and dashboard only talk to the HTTP endpoints, so another runner can be plugged in, but the starter ships the .NET pieces.</p></details>
+  <details><summary>Is it safe to expose the endpoints?</summary><p>They are disabled in Production unless you set <code>AllowInProduction</code>, can be protected with <code>RequireAuthorization()</code>, the iframe uses short-lived dashboard tokens and evidence files are served with a sandbox Content-Security-Policy.</p></details>
+  <details><summary>Can I share a report without the app running?</summary><p>Yes. Every run writes a standalone <code>report.html</code> with screenshots, steps, console output and the Playwright trace. Upload it as a CI artifact or send it to anyone.</p></details>
+  <details><summary>Can I run the same tests in CI?</summary><p>Yes. The tests are a normal <code>dotnet test</code> project; the repository includes GitHub Actions workflows that run them and publish the report.</p></details>
+  <details><summary>What does it cost?</summary><p>Nothing. It is open source under the MIT license.</p></details>
+</div></section>
+</main>
+<footer><div class="wrap">MIT licensed · by <a href="https://github.com/perisicnikola37">Nikola Perisic</a> · <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter">Source on GitHub</a> · <a href="demo/">Dashboard demo</a></div></footer>
+</body>
+</html>

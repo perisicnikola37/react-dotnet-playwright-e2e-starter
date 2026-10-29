@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Starts the API and the web app, waits until both answer, runs the Playwright tests, then stops everything.
 #
-# Usage: scripts/run-e2e.sh [--category Smoke|Regression] [--headed] [--browser Chromium|Firefox|WebKit|chrome|msedge]
+# Usage: scripts/run-e2e.sh [--category Smoke|Regression] [--headed] [--browser Chromium|Firefox|WebKit|chrome|msedge] [--report <dir>]
+#   --report writes the dashboard, report.html and failure evidence to <dir> (through scripts/run-ci.sh).
 #   Extra arguments after "--" go to `dotnet test`.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CATEGORY=""
+REPORT=""
 export E2E_Browser__Headless="${E2E_Browser__Headless:-true}"
 
 while [[ $# -gt 0 ]]; do
@@ -14,6 +16,7 @@ while [[ $# -gt 0 ]]; do
     --category) CATEGORY="$2"; shift 2 ;;
     --headed) export E2E_Browser__Headless=false; shift ;;
     --browser) export E2E_Browser__Name="$2"; shift 2 ;;
+    --report) REPORT="$2"; shift 2 ;;
     --) shift; break ;;
     *) echo "Unknown option: $1" >&2; exit 64 ;;
   esac
@@ -55,6 +58,11 @@ PIDS+=($!)
 
 wait_for "$API_URL/health" "API"
 wait_for "$WEB_URL" "Web app"
+
+if [[ -n "$REPORT" ]]; then
+  "$ROOT/scripts/run-ci.sh" "$REPORT" "$CATEGORY" -- "$@"
+  exit $?
+fi
 
 FILTER=()
 [[ -n "$CATEGORY" ]] && FILTER=(--filter-trait "Category=$CATEGORY")

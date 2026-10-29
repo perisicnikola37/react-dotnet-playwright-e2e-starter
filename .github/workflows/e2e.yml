@@ -17,7 +17,7 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -30,7 +30,7 @@ jobs:
 
       - run: npm ci --no-fund
 
-      - name: Build the client package and the web app
+      - name: Build the npm packages and the web app
         run: npm run build
 
       - name: Build
@@ -40,14 +40,15 @@ jobs:
         run: pwsh tests/E2eStarter.E2E/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: Run the E2E tests
-        run: scripts/run-e2e.sh -- -c Release --no-build
+        run: scripts/run-e2e.sh --report artifacts/e2e-report -- -c Release --no-build
 
-      - name: Upload failure evidence
-        if: failure()
+      # Dashboard (index.html), standalone report.html, data.json and failure evidence of this run.
+      - name: Upload the test report
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-artifacts
+          name: e2e-report
           path: |
-            tests/E2eStarter.E2E/bin/**/artifacts
+            artifacts/e2e-report
             api.log
             web.log

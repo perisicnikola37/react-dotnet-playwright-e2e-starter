@@ -1,4 +1,4 @@
-import { createItemsClient, type Item } from "@perisicnikola37/e2e-starter-client";
+import { createItemsClient, type Item } from "./itemsClient";
 import { FormEvent, useEffect, useState } from "react";
 
 const client = createItemsClient();
