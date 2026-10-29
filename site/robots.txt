@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/sitemap.xml

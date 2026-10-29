@@ -31,6 +31,8 @@
       "name": "react-dotnet-playwright-e2e-starter",
       "description": "Starter and packages that add a Playwright UI test dashboard to a React app with an ASP.NET Core backend: start Playwright for .NET tests from the browser, follow them live, re-run failed tests and share HTML reports with screenshots and traces.",
       "url": "https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/",
+      "softwareVersion": "1.3.0",
+      "downloadUrl": "https://www.npmjs.com/package/@perisicnikola37/e2e-starter-react",
       "codeRepository": "https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter",
       "programmingLanguage": ["C#", "TypeScript"],
       "runtimePlatform": [".NET 10", "Node.js"],
@@ -47,6 +49,8 @@
           "acceptedAnswer": { "@type": "Answer", "text": "The runner and reporter are built for Playwright for .NET with xUnit v3. The React page and dashboard only need the HTTP endpoints, so another runner can be plugged in, but the starter ships the .NET pieces." } },
         { "@type": "Question", "name": "Is it safe to expose the dashboard endpoints?",
           "acceptedAnswer": { "@type": "Answer", "text": "The endpoints are disabled in Production unless you opt in, can be protected with RequireAuthorization, use short-lived dashboard tokens for the iframe, and serve evidence files with a sandbox Content-Security-Policy." } },
+        { "@type": "Question", "name": "How do I install it and what are the requirements?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The packages are public on nuget.org (E2eStarter.Playwright, E2eStarter.AspNetCore, E2eStarter.Reporters) and npm (@perisicnikola37/e2e-starter-react). No tokens or extra feeds are needed. You need the .NET 10 SDK, Node.js 22+ and a React 18+ app with an ASP.NET Core backend." } },
         { "@type": "Question", "name": "Can I share a report without the app running?",
           "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every run produces a standalone report.html with screenshots, steps, console output and the Playwright trace, which can be uploaded as a CI artifact or emailed." } }
       ]
@@ -57,7 +61,7 @@
 <style>
 :root{color-scheme:dark;--bg:#070a13;--bg2:#0c1120;--fg:#eef2ff;--mut:#97a3bd;--card:rgba(255,255,255,.04);--card2:rgba(255,255,255,.07);--line:rgba(255,255,255,.09);--acc:#6366f1;--acc2:#22d3ee;--ok:#34d399;--bad:#fb7185;--warn:#fbbf24;--code:#050810;--glow:rgba(99,102,241,.35);--r:18px;--shadow:0 30px 80px -20px rgba(0,0,0,.7)}
 :root[data-theme=light]{color-scheme:light;--bg:#f7f8fc;--bg2:#fff;--fg:#0d1226;--mut:#566079;--card:rgba(255,255,255,.75);--card2:#fff;--line:rgba(13,18,38,.1);--acc:#4f46e5;--acc2:#0891b2;--ok:#059669;--bad:#e11d48;--warn:#d97706;--code:#0d1226;--glow:rgba(79,70,229,.22);--shadow:0 30px 70px -25px rgba(30,41,90,.35)}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:84px}
+*{box-sizing:border-box}[hidden]{display:none!important}html{scroll-behavior:smooth;scroll-padding-top:84px}
 body{margin:0;font:16px/1.65 "Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit}
 .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
@@ -75,17 +79,18 @@ a{color:inherit}
 
 header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);background:color-mix(in srgb,var(--bg) 70%,transparent);border-bottom:1px solid var(--line)}
 header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;letter-spacing:-.01em;font-size:15px}
+.brand{white-space:nowrap;display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;letter-spacing:-.01em;font-size:15px}
 .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;box-shadow:0 6px 20px -4px var(--glow)}
 .logo svg{width:16px;height:16px}
 nav{display:flex;align-items:center;gap:4px}
-nav a{padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--mut);font-size:14px;font-weight:500;transition:.2s}
+nav a{white-space:nowrap;padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--mut);font-size:14px;font-weight:500;transition:.2s}
 nav a:hover{color:var(--fg);background:var(--card2)}
 .icon-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--fg);display:grid;place-items:center;cursor:pointer;transition:.2s}
 .icon-btn:hover{background:var(--card2);transform:translateY(-1px)}
 .icon-btn svg{width:18px;height:18px}
 .sun{display:none}:root[data-theme=light] .sun{display:block}:root[data-theme=light] .moon{display:none}
 @media(max-width:820px){nav .hide-m{display:none}}
+@media(max-width:480px){.hero{padding-top:56px}.wrap{padding:0 18px}header nav a:not(.icon-btn){padding:8px 8px;font-size:13px}.cta .btn{width:100%;justify-content:center}}
 
 .btn{display:inline-flex;align-items:center;gap:9px;padding:13px 22px;border-radius:13px;font-weight:600;font-size:15px;text-decoration:none;border:1px solid var(--line);background:var(--card);transition:transform .2s,box-shadow .2s,background .2s;cursor:pointer;color:var(--fg);font-family:inherit}
 .btn:hover{transform:translateY(-2px);background:var(--card2)}
@@ -100,6 +105,10 @@ nav a:hover{color:var(--fg);background:var(--card2)}
 h1{font-size:clamp(38px,6.4vw,76px);line-height:1.03;letter-spacing:-.035em;margin:0 auto 22px;max-width:19ch;font-weight:800}
 .sub{font-size:clamp(17px,2vw,20px);color:var(--mut);max-width:680px;margin:0 auto 34px}
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.seg{display:inline-flex;gap:4px;padding:4px;margin-top:26px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.seg button{border:0;background:none;color:var(--mut);padding:6px 16px;border-radius:9px;font:600 13px inherit;font-family:inherit;cursor:pointer;transition:.2s}
+.seg button[aria-pressed=true]{background:var(--acc);color:#fff}
+.hero .install{margin-top:12px}
 .install{display:inline-flex;align-items:center;gap:12px;margin-top:26px;padding:10px 10px 10px 18px;border:1px solid var(--line);border-radius:14px;background:var(--code);color:#cbd5ff;font:13.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;max-width:100%}
 .install span{overflow:auto;white-space:nowrap}.install em{color:var(--acc2);font-style:normal}
 .copy{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#cbd5ff;border-radius:9px;padding:6px 12px;font:600 12px inherit;font-family:inherit;cursor:pointer;transition:.2s;flex:none}
@@ -146,7 +155,7 @@ h1{font-size:clamp(38px,6.4vw,76px);line-height:1.03;letter-spacing:-.035em;marg
 
 section{padding:96px 0}
 .eyebrow{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc2);margin-bottom:12px}
-h2{font-size:clamp(30px,4.2vw,48px);line-height:1.1;letter-spacing:-.03em;margin:0 0 14px;font-weight:800;max-width:20ch}
+h2{font-size:clamp(30px,4.2vw,48px);line-height:1.1;letter-spacing:-.03em;margin:0 0 14px;font-weight:800;max-width:24ch}
 .lead{color:var(--mut);font-size:18px;max-width:620px;margin:0 0 48px}
 .center{text-align:center}.center h2,.center .lead{margin-left:auto;margin-right:auto}
 
@@ -175,11 +184,16 @@ h2{font-size:clamp(30px,4.2vw,48px);line-height:1.1;letter-spacing:-.03em;margin
 .pk{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
 .pk div{padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--card);transition:.25s}
 .pk div:hover{border-color:var(--acc);transform:translateY(-3px)}
-.pk code{display:block;font-size:13.5px;color:var(--acc2);font-weight:600;margin-bottom:6px;word-break:break-all}
+.pk>div>code{display:block;font-size:13px;color:var(--acc2);font-weight:600;margin-bottom:8px;overflow-wrap:anywhere;background:none;border:0;padding:0}
 .pk span{display:block;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
 .pk p{margin:0;font-size:14.5px;color:var(--mut)}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+p code,.pk p code,.sec p code,.cell p code,.lead code,details p code{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--fg)}
 
+.reqs{display:flex;flex-wrap:wrap;gap:8px;margin:-20px 0 28px}
+.reqs span{font-size:13px;font-weight:600;padding:5px 13px;border:1px solid var(--line);border-radius:99px;color:var(--mut);background:var(--card)}
+.reqs span::before{content:"✓ ";color:var(--ok)}
+.tab.ai{margin-top:10px;border-style:dashed}
 .qs{display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:start}
 .tabs{display:flex;flex-direction:column;gap:8px}
 .tab{text-align:left;padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--mut);cursor:pointer;font:inherit;transition:.2s}
@@ -243,7 +257,8 @@ footer a{text-decoration:none;margin-left:16px}footer a:hover{color:var(--fg)}fo
     <a class="btn" href="demo/">▶ Open the live demo</a>
     <a class="btn" href="#quick-start">Add to an existing app</a>
   </div>
-  <div class="install rv"><span><em>$</em> npm i @perisicnikola37/e2e-starter-react</span><button class="copy" type="button" data-copy="npm i @perisicnikola37/e2e-starter-react">Copy</button></div>
+  <div class="seg rv" role="group" aria-label="Package manager"><button type="button" aria-pressed="true" data-cmd="npm i @perisicnikola37/e2e-starter-react">npm</button><button type="button" aria-pressed="false" data-cmd="dotnet add package E2eStarter.AspNetCore">NuGet</button></div>
+  <div class="install rv"><span><em>$</em> <b id="cmd" style="font-weight:500">npm i @perisicnikola37/e2e-starter-react</b></span><button class="copy" type="button" id="cmdCopy" data-copy="npm i @perisicnikola37/e2e-starter-react">Copy</button></div>
 
   <div class="stage rv" aria-label="Animated preview of the test dashboard">
     <div class="win">
@@ -298,22 +313,33 @@ footer a{text-decoration:none;margin-left:16px}footer a:hover{color:var(--fg)}fo
 <section id="quick-start"><div class="wrap">
   <div class="eyebrow rv">Quick start</div>
   <h2 class="rv">Up and running in four steps</h2>
-  <p class="lead rv">Already have a React app with an ASP.NET Core backend? Everything installs straight from <b>nuget.org</b> and <b>npm</b>: no tokens, no extra feeds. Add the packages yourself or let an AI assistant do it. Starting from scratch? <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/generate" style="color:var(--acc2)">Use the template</a>.</p>
+  <p class="lead rv">Everything installs straight from <b>nuget.org</b> and <b>npm</b>: no tokens, no extra feeds. Do the steps yourself or paste a prompt into your AI assistant. Starting from scratch? <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/generate" style="color:var(--acc2)">Use the template</a>.</p>
+  <div class="reqs rv" aria-label="Requirements"><span>.NET 10 SDK</span><span>Node.js 22+</span><span>React 18+</span><span>ASP.NET Core backend</span></div>
   <div class="qs rv">
     <div class="tabs" role="tablist" aria-label="Setup steps">
-      <button class="tab" role="tab" id="t0" aria-controls="p0" aria-selected="true" type="button"><b>1 · Write UI tests</b><small>dotnet add package</small></button>
-      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="false" tabindex="-1" type="button"><b>2 · Add the API</b><small>dotnet add package</small></button>
-      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1" type="button"><b>3 · Add the React page</b><small>npm install</small></button>
-      <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1" type="button"><b>✨ Let an AI do it</b><small>Copy a ready prompt</small></button>
+      <button class="tab" role="tab" id="t0" aria-controls="p0" aria-selected="true" type="button"><b>1 · UI test project</b><small>E2eStarter.Playwright</small></button>
+      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="false" tabindex="-1" type="button"><b>2 · API endpoints</b><small>E2eStarter.AspNetCore</small></button>
+      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1" type="button"><b>3 · React page</b><small>@perisicnikola37/e2e-starter-react</small></button>
+      <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1" type="button"><b>4 · Run it</b><small>Open /automated-tests</small></button>
+      <button class="tab ai" role="tab" id="t4" aria-controls="p4" aria-selected="false" tabindex="-1" type="button"><b>✨ Or let an AI do it</b><small>Copy a ready prompt</small></button>
     </div>
     <div>
-      <div class="panel" role="tabpanel" id="p0" aria-labelledby="t0"><div class="ph"><span>Terminal + ItemsTests.cs</span><button class="copy" type="button" data-target="c0">Copy</button></div>
-<pre id="c0"><code><span class="c"># 1. Install</span>
+      <div class="panel" role="tabpanel" id="p0" aria-labelledby="t0"><div class="ph"><span>Terminal · MyApp.E2E.csproj · ItemsTests.cs</span><button class="copy" type="button" data-target="c0">Copy</button></div>
+<pre id="c0"><code><span class="c"># Install</span>
 dotnet new xunit3 -n MyApp.E2E &amp;&amp; cd MyApp.E2E
 dotnet add package E2eStarter.Playwright
 dotnet add package Microsoft.Testing.Extensions.TrxReport
 
-<span class="c">// 2. Write a test (ItemsTests.cs)</span>
+<span class="c">// global.json: "test": { "runner": "Microsoft.Testing.Platform" }</span>
+<span class="c">// MyApp.E2E.csproj: &lt;OutputType&gt;Exe&lt;/OutputType&gt;</span>
+
+<span class="c">// Once per test project: shared browser + live progress</span>
+[<span class="k">assembly</span>: TestFramework(<span class="k">typeof</span>(LiveProgressTestFramework))]
+
+[CollectionDefinition(UiTestBase.CollectionName)]
+<span class="k">public sealed class</span> <span class="f">BrowserCollection</span> : ICollectionFixture&lt;SuiteFixture&gt;;
+
+[Trait(TestCategories.Key, TestCategories.Smoke)]
 <span class="k">public sealed class</span> <span class="f">ItemsTests</span>(SuiteFixture suite) : UiTestBase(suite)
 {
     [Fact]
@@ -325,37 +351,50 @@ dotnet add package Microsoft.Testing.Extensions.TrxReport
         Step(<span class="s">"Add an item"</span>);
         <span class="k">await</span> items.AddItemAsync(<span class="s">"Review the test plan"</span>);
     }
-}</code></pre></div>
-      <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1" hidden><div class="ph"><span>Terminal + Program.cs</span><button class="copy" type="button" data-target="c1">Copy</button></div>
-<pre id="c1"><code><span class="c"># 1. Install (in your ASP.NET Core API)</span>
+}
+
+<span class="c"># Then copy scripts/run-ci.sh from the repo and point it at this project</span></code></pre></div>
+      <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1" hidden><div class="ph"><span>Terminal · Program.cs · appsettings.json</span><button class="copy" type="button" data-target="c1">Copy</button></div>
+<pre id="c1"><code><span class="c"># Install (in your ASP.NET Core API)</span>
 dotnet add package E2eStarter.AspNetCore
 
-<span class="c">// 2. Register and map (Program.cs)</span>
+<span class="c">// Program.cs</span>
 builder.Services.<span class="f">AddAutomatedTests</span>(
     builder.Configuration.GetSection(<span class="s">"AutomatedTests"</span>));
+<span class="c">// ...</span>
+app.<span class="f">MapAutomatedTests</span>().<span class="f">RequireAuthorization</span>();   <span class="c">// /api/automated-tests</span>
 
-<span class="c">// /api/automated-tests</span>
-app.<span class="f">MapAutomatedTests</span>().<span class="f">RequireAuthorization</span>();
-
-<span class="c">// 3. appsettings.json</span>
+<span class="c">// appsettings.json (WorkingDirectory is where scripts/run-ci.sh lives)</span>
 "AutomatedTests": { "WorkingDirectory": "../..", "Title": "My app · UI tests" }</code></pre></div>
-      <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><div class="ph"><span>Terminal + App.tsx</span><button class="copy" type="button" data-target="c2">Copy</button></div>
-<pre id="c2"><code><span class="c"># 1. Install</span>
+      <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><div class="ph"><span>Terminal · App.tsx</span><button class="copy" type="button" data-target="c2">Copy</button></div>
+<pre id="c2"><code><span class="c"># Install</span>
 npm install @perisicnikola37/e2e-starter-react
 
-<span class="c">// 2. Add a route (App.tsx)</span>
+<span class="c">// App.tsx</span>
 <span class="k">import</span> { AutomatedTestsPage } <span class="k">from</span> <span class="s">"@perisicnikola37/e2e-starter-react"</span>;
 
 &lt;<span class="f">Route</span> path=<span class="s">"/automated-tests"</span>
-  element={&lt;<span class="f">AutomatedTestsPage</span> categories={[<span class="s">"Smoke"</span>, <span class="s">"Regression"</span>]} /&gt;} /&gt;</code></pre></div>
-      <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden><div class="ph"><span>Prompt for Copilot, Claude Code, Cursor…</span><button class="copy" type="button" data-target="c3">Copy prompt</button></div>
-<pre id="c3" style="white-space:pre-wrap"><code>Add the Playwright UI test dashboard from
+  element={&lt;<span class="f">AutomatedTestsPage</span> categories={[<span class="s">"Smoke"</span>, <span class="s">"Regression"</span>]} /&gt;} /&gt;
+
+<span class="c">// The page calls /api/automated-tests on the same origin: proxy it in dev,</span>
+<span class="c">// or pass a client with createAutomatedTestsClient({ baseUrl, getAccessToken }).</span></code></pre></div>
+      <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden><div class="ph"><span>Run it</span><button class="copy" type="button" data-target="c3">Copy</button></div>
+<pre id="c3"><code><span class="c"># 1. Start your API and your web app, then open</span>
+http://localhost:&lt;port&gt;/automated-tests
+
+<span class="c"># 2. Pick a category (Smoke, Regression) and press Run.</span>
+<span class="c">#    The dashboard updates live; when the run finishes, re-run only the failed tests.</span>
+
+<span class="c"># Or without the UI, against a running app:</span>
+scripts/run-ci.sh out/run1 Smoke</code></pre></div>
+      <div class="panel" role="tabpanel" id="p4" aria-labelledby="t4" hidden><div class="ph"><span>Prompt for Copilot, Claude Code, Cursor…</span><button class="copy" type="button" data-target="c4">Copy prompt</button></div>
+<pre id="c4" style="white-space:pre-wrap"><code>Add the Playwright UI test dashboard from
 https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter
 to this repository. Follow its README section "Add it to your React app" and run the install commands.
 Requirements: .NET 10 SDK, Node.js 22+, React 18+ with an ASP.NET Core backend.
 Check them first and tell me what is missing.
 
-1. Packages are public on nuget.org and npm: no feeds or tokens are needed.
+1. The packages are public on nuget.org and npm: no feeds or tokens are needed.
 2. Test project: xunit3 project with E2eStarter.Playwright and
    Microsoft.Testing.Extensions.TrxReport, Microsoft.Testing.Platform runner,
    the TestFramework attribute, BrowserCollection and one Smoke test with a page
@@ -370,7 +409,7 @@ Use the existing code style and auth. Do not enable AllowInProduction.
 If a step fails, show me the error and suggest a fix first.</code></pre></div>
     </div>
   </div>
-  <p class="rv" style="margin-top:24px;color:var(--mut)">Full guide, configuration and CI setup: <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter#readme" style="color:var(--acc2)">README on GitHub</a>.</p>
+  <p class="rv" style="margin-top:24px;color:var(--mut)">Full guide, configuration reference and CI setup: <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter#readme" style="color:var(--acc2)">README on GitHub</a>.</p>
 </div></section>
 
 <section id="preview"><div class="wrap">
@@ -378,6 +417,7 @@ If a step fails, show me the error and suggest a fix first.</code></pre></div>
   <h2 class="rv">Failures you can actually debug</h2>
   <p class="lead rv">Screenshot, steps, console and trace sit next to the error, and the same page works as a standalone file.</p></div>
   <div class="shotwrap rv" style="max-width:980px;margin:0 auto"><img src="preview.png" width="1366" height="1500" alt="Playwright test dashboard showing passed and failed UI tests with a screenshot, steps and error of a failed test" loading="lazy"></div>
+  <div class="cta rv" style="margin-top:28px"><a class="btn" href="demo/">▶ Try the interactive demo</a></div>
 </div></section>
 
 <section id="security"><div class="wrap">
@@ -397,6 +437,7 @@ If a step fails, show me the error and suggest a fix first.</code></pre></div>
   <details class="rv"><summary>How do I add a Playwright test dashboard to my React app?</summary><p>Add <code>E2eStarter.AspNetCore</code> to your ASP.NET Core API, call <code>AddAutomatedTests()</code> and <code>MapAutomatedTests()</code>, then render <code>&lt;AutomatedTestsPage /&gt;</code> on any React route. Testers can start runs, watch them live and open the report from that page.</p></details>
   <details class="rv"><summary>Does it work with Playwright for Node.js (@playwright/test)?</summary><p>The runner and reporter are built for Playwright for .NET with xUnit v3. The React page and dashboard only talk to the HTTP endpoints, so another runner can be plugged in, but the starter ships the .NET pieces.</p></details>
   <details class="rv"><summary>Is it safe to expose the endpoints?</summary><p>They are disabled in Production unless you set <code>AllowInProduction</code>, can be protected with <code>RequireAuthorization()</code>, the iframe uses short-lived dashboard tokens and evidence files are served with a sandbox Content-Security-Policy.</p></details>
+  <details class="rv"><summary>How do I install it and what are the requirements?</summary><p>Everything is public on <a href="https://www.nuget.org/profiles/perisicnikola37" style="color:var(--acc2)">nuget.org</a> and <a href="https://www.npmjs.com/~perisicnikola37" style="color:var(--acc2)">npm</a>: <code>dotnet add package E2eStarter.Playwright</code> / <code>E2eStarter.AspNetCore</code> and <code>npm install @perisicnikola37/e2e-starter-react</code>. No tokens or extra feeds. You need the .NET 10 SDK, Node.js 22+ and a React 18+ app with an ASP.NET Core backend.</p></details>
   <details class="rv"><summary>Can I share a report without the app running?</summary><p>Yes. Every run writes a standalone <code>report.html</code> with screenshots, steps, console output and the Playwright trace. Upload it as a CI artifact or send it to anyone.</p></details>
   <details class="rv"><summary>Can I run the same tests in CI?</summary><p>Yes. The tests are a normal <code>dotnet test</code> project; the repository includes GitHub Actions workflows that run them and publish the report.</p></details>
   <details class="rv"><summary>What does it cost?</summary><p>Nothing. It is open source under the MIT license.</p></details>
@@ -409,7 +450,7 @@ If a step fails, show me the error and suggest a fix first.</code></pre></div>
 </div></div>
 </main>
 <footer><div class="wrap"><div>MIT licensed · by <a href="https://github.com/perisicnikola37">Nikola Perisic</a></div>
-<div><a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter">Source on GitHub</a><a href="demo/">Dashboard demo</a><a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/blob/main/CHANGELOG.md">Changelog</a></div></div></footer>
+<div><a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter">Source on GitHub</a><a href="demo/">Dashboard demo</a><a href="https://www.nuget.org/profiles/perisicnikola37">NuGet</a><a href="https://www.npmjs.com/~perisicnikola37">npm</a><a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/blob/main/CHANGELOG.md">Changelog</a></div></div></footer>
 
 <script>
 (()=>{
@@ -428,6 +469,9 @@ document.addEventListener("click",async e=>{const b=e.target.closest(".copy");if
   const txt=b.dataset.copy??document.getElementById(b.dataset.target).innerText;
   try{await navigator.clipboard.writeText(txt)}catch{}
   const o=b.textContent;b.textContent="Copied ✓";b.classList.add("done");setTimeout(()=>{b.textContent=o;b.classList.remove("done")},1600)});
+// install switcher
+const cmdEl=$("#cmd"),cmdCopy=$("#cmdCopy");
+$$(".seg button").forEach(b=>b.onclick=()=>{$$(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));cmdEl.textContent=b.dataset.cmd;cmdCopy.dataset.copy=b.dataset.cmd});
 // tabs
 const tabs=$$(".tab");
 function pick(i){tabs.forEach((t,j)=>{t.setAttribute("aria-selected",i===j);t.tabIndex=i===j?0:-1;document.getElementById("p"+j).hidden=i!==j})}
