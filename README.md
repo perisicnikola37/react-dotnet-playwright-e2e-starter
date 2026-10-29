@@ -135,6 +135,39 @@ const client = createAutomatedTestsClient({ baseUrl: "https://api.example.test",
 
 Start the API and the web app, open `/automated-tests`, pick a category and press **Run**. The dashboard of the run appears below and updates live; when the run finishes you can re-run the failed tests from it.
 
+### Or let an AI assistant do it
+
+Open your app in an AI coding assistant (GitHub Copilot, Claude Code, Cursor, ...) and paste this prompt:
+
+```text
+Add the Playwright UI test dashboard from
+https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter
+to this repository. Read its README section "Add it to your React app" and
+follow it step by step. Requirements: .NET 10 SDK, Node.js 22+, React 18+ with an
+ASP.NET Core backend. Check them first and tell me what is missing.
+
+1. Feeds: create a NuGet.config and .npmrc for GitHub Packages of
+   perisicnikola37 exactly as in "Access to the feeds". Read the token from the
+   GITHUB_PACKAGES_TOKEN environment variable. Never write a literal token to a file.
+2. Test project: `dotnet new xunit3 -n <App>.E2E`, add E2eStarter.Playwright and
+   Microsoft.Testing.Extensions.TrxReport, use the Microsoft.Testing.Platform runner
+   (global.json), <OutputType>Exe</OutputType>, the TestFramework assembly attribute,
+   the BrowserCollection, and one Smoke test with a page object for a real page of
+   this app. Copy scripts/run-ci.sh and point it at the new test project.
+3. Backend: add E2eStarter.AspNetCore, call AddAutomatedTests(...) and
+   MapAutomatedTests().RequireAuthorization(), and add the "AutomatedTests" config
+   section (WorkingDirectory, Title).
+4. React: `npm install @perisicnikola37/e2e-starter-react`, add a route
+   /automated-tests rendering <AutomatedTestsPage categories={["Smoke","Regression"]} />,
+   and proxy /api/automated-tests in development. If the app uses bearer tokens, pass
+   a client from createAutomatedTestsClient({ getAccessToken }).
+5. Verify: build the backend and frontend, start both, open /automated-tests and run
+   the Smoke category.
+
+Use existing code style and auth. Do not enable AllowInProduction. If a step
+fails, show me the error and suggest a fix before continuing.
+```
+
 ## 🔄 How it works
 
 ```mermaid
