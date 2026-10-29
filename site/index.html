@@ -298,17 +298,22 @@ footer a{text-decoration:none;margin-left:16px}footer a:hover{color:var(--fg)}fo
 <section id="quick-start"><div class="wrap">
   <div class="eyebrow rv">Quick start</div>
   <h2 class="rv">Up and running in four steps</h2>
-  <p class="lead rv">Already have a React app with an ASP.NET Core backend? Add the packages yourself, or let an AI assistant do it. Starting from scratch? <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/generate" style="color:var(--acc2)">Use the template</a>.</p>
+  <p class="lead rv">Already have a React app with an ASP.NET Core backend? Everything installs straight from <b>nuget.org</b> and <b>npm</b>: no tokens, no extra feeds. Add the packages yourself or let an AI assistant do it. Starting from scratch? <a href="https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/generate" style="color:var(--acc2)">Use the template</a>.</p>
   <div class="qs rv">
     <div class="tabs" role="tablist" aria-label="Setup steps">
-      <button class="tab" role="tab" id="t0" aria-controls="p0" aria-selected="true" type="button"><b>1 · Write UI tests</b><small>E2eStarter.Playwright</small></button>
-      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="false" tabindex="-1" type="button"><b>2 · Add the API</b><small>E2eStarter.AspNetCore</small></button>
-      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1" type="button"><b>3 · Add the React page</b><small>e2e-starter-react</small></button>
+      <button class="tab" role="tab" id="t0" aria-controls="p0" aria-selected="true" type="button"><b>1 · Write UI tests</b><small>dotnet add package</small></button>
+      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="false" tabindex="-1" type="button"><b>2 · Add the API</b><small>dotnet add package</small></button>
+      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1" type="button"><b>3 · Add the React page</b><small>npm install</small></button>
       <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1" type="button"><b>✨ Let an AI do it</b><small>Copy a ready prompt</small></button>
     </div>
     <div>
-      <div class="panel" role="tabpanel" id="p0" aria-labelledby="t0"><div class="ph"><span>ItemsTests.cs</span><button class="copy" type="button" data-target="c0">Copy</button></div>
-<pre id="c0"><code><span class="c">// dotnet add package E2eStarter.Playwright</span>
+      <div class="panel" role="tabpanel" id="p0" aria-labelledby="t0"><div class="ph"><span>Terminal + ItemsTests.cs</span><button class="copy" type="button" data-target="c0">Copy</button></div>
+<pre id="c0"><code><span class="c"># 1. Install</span>
+dotnet new xunit3 -n MyApp.E2E &amp;&amp; cd MyApp.E2E
+dotnet add package E2eStarter.Playwright
+dotnet add package Microsoft.Testing.Extensions.TrxReport
+
+<span class="c">// 2. Write a test (ItemsTests.cs)</span>
 <span class="k">public sealed class</span> <span class="f">ItemsTests</span>(SuiteFixture suite) : UiTestBase(suite)
 {
     [Fact]
@@ -321,15 +326,24 @@ footer a{text-decoration:none;margin-left:16px}footer a:hover{color:var(--fg)}fo
         <span class="k">await</span> items.AddItemAsync(<span class="s">"Review the test plan"</span>);
     }
 }</code></pre></div>
-      <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1" hidden><div class="ph"><span>Program.cs</span><button class="copy" type="button" data-target="c1">Copy</button></div>
-<pre id="c1"><code><span class="c">// dotnet add package E2eStarter.AspNetCore</span>
+      <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1" hidden><div class="ph"><span>Terminal + Program.cs</span><button class="copy" type="button" data-target="c1">Copy</button></div>
+<pre id="c1"><code><span class="c"># 1. Install (in your ASP.NET Core API)</span>
+dotnet add package E2eStarter.AspNetCore
+
+<span class="c">// 2. Register and map (Program.cs)</span>
 builder.Services.<span class="f">AddAutomatedTests</span>(
     builder.Configuration.GetSection(<span class="s">"AutomatedTests"</span>));
 
 <span class="c">// /api/automated-tests</span>
-app.<span class="f">MapAutomatedTests</span>().<span class="f">RequireAuthorization</span>();</code></pre></div>
-      <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><div class="ph"><span>App.tsx</span><button class="copy" type="button" data-target="c2">Copy</button></div>
-<pre id="c2"><code><span class="c">// npm install @perisicnikola37/e2e-starter-react</span>
+app.<span class="f">MapAutomatedTests</span>().<span class="f">RequireAuthorization</span>();
+
+<span class="c">// 3. appsettings.json</span>
+"AutomatedTests": { "WorkingDirectory": "../..", "Title": "My app · UI tests" }</code></pre></div>
+      <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><div class="ph"><span>Terminal + App.tsx</span><button class="copy" type="button" data-target="c2">Copy</button></div>
+<pre id="c2"><code><span class="c"># 1. Install</span>
+npm install @perisicnikola37/e2e-starter-react
+
+<span class="c">// 2. Add a route (App.tsx)</span>
 <span class="k">import</span> { AutomatedTestsPage } <span class="k">from</span> <span class="s">"@perisicnikola37/e2e-starter-react"</span>;
 
 &lt;<span class="f">Route</span> path=<span class="s">"/automated-tests"</span>
@@ -337,12 +351,11 @@ app.<span class="f">MapAutomatedTests</span>().<span class="f">RequireAuthorizat
       <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden><div class="ph"><span>Prompt for Copilot, Claude Code, Cursor…</span><button class="copy" type="button" data-target="c3">Copy prompt</button></div>
 <pre id="c3" style="white-space:pre-wrap"><code>Add the Playwright UI test dashboard from
 https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter
-to this repository. Follow its README section "Add it to your React app".
+to this repository. Follow its README section "Add it to your React app" and run the install commands.
 Requirements: .NET 10 SDK, Node.js 22+, React 18+ with an ASP.NET Core backend.
 Check them first and tell me what is missing.
 
-1. Feeds: create NuGet.config and .npmrc for GitHub Packages of perisicnikola37.
-   Read the token from GITHUB_PACKAGES_TOKEN; never write a literal token.
+1. Packages are public on nuget.org and npm: no feeds or tokens are needed.
 2. Test project: xunit3 project with E2eStarter.Playwright and
    Microsoft.Testing.Extensions.TrxReport, Microsoft.Testing.Platform runner,
    the TestFramework attribute, BrowserCollection and one Smoke test with a page

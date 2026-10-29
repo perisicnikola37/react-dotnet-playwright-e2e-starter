@@ -1,6 +1,6 @@
 name: Publish
 
-# Pushing a v* tag publishes the NuGet and npm packages to GitHub Packages and creates a GitHub Release.
+# Pushing a v* tag publishes the NuGet packages to nuget.org and the npm packages to npmjs.com and creates a GitHub Release.
 on:
   push:
     tags: ["v*"]
@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write
-  packages: write
+  id-token: write
 
 jobs:
   publish:
@@ -19,8 +19,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          registry-url: https://npm.pkg.github.com
-          scope: "@perisicnikola37"
+          registry-url: https://registry.npmjs.org
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -65,7 +64,7 @@ jobs:
         run: |
           # Re-running the workflow for a published version is fine; any other error fails the job.
           for pkg in artifacts/npm/*.tgz; do
-            if ! npm publish "$pkg" --registry https://npm.pkg.github.com 2>publish.err; then
+            if ! npm publish "$pkg" --access public --provenance 2>publish.err; then
               cat publish.err >&2
               if grep -qE "E409|cannot publish over|previously published" publish.err; then
                 echo "::warning::$pkg is already published."
@@ -75,13 +74,19 @@ jobs:
             fi
           done
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Log in to nuget.org (trusted publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: perisicnikola37
 
       - name: Publish the NuGet packages
         run: |
           dotnet nuget push "artifacts/nuget/*.nupkg" \
-            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
-            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
 
       - name: Create the GitHub Release

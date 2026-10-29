@@ -43,4 +43,4 @@ docs: explain StorageState authentication
 2. Update `CHANGELOG.md`.
 3. Merge, then tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-The **Publish** workflow checks that the tag matches every version, then publishes the NuGet and npm packages to GitHub Packages and creates the GitHub Release.
+The **Publish** workflow checks that the tag matches every version, then publishes the NuGet and npm packages to nuget.org (trusted publishing) and npmjs.com (`NPM_TOKEN` secret) and creates the GitHub Release.

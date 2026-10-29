@@ -36,4 +36,4 @@ public sealed class HomeTests(SuiteFixture suite) : UiTestBase(suite)
 }
 ```
 
-Packages are published to GitHub Packages (`https://nuget.pkg.github.com/perisicnikola37/index.json`), which needs a token with `read:packages`. Full documentation: <https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter>.
+Full documentation: <https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter>.

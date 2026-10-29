@@ -51,11 +51,11 @@ Use it two ways: **add the packages to an existing React + ASP.NET Core app**, o
 | [`@perisicnikola37/e2e-starter-dashboard`](packages/dashboard) | any web host (npm) | `dashboard.html`: the single-file dashboard and report, plus the `data.json` contract |
 
 > [!NOTE]
-> The packages are published to GitHub Packages of `perisicnikola37` and versioned together (tag `vX.Y.Z`). See [Access to the feeds](#access-to-the-feeds).
+> The packages are published to [nuget.org](https://www.nuget.org/profiles/perisicnikola37) and [npmjs.com](https://www.npmjs.com/~perisicnikola37) and versioned together (tag `vX.Y.Z`). No tokens or extra feeds are needed to install them.
 
 ## ⚡ Add it to your React app
 
-Requirements: .NET 10 SDK, Node.js 22+, a React 18+ app with an ASP.NET Core backend. Set up the [feeds](#access-to-the-feeds) first.
+Requirements: .NET 10 SDK, Node.js 22+, a React 18+ app with an ASP.NET Core backend.
 
 ### 1) Test project
 
@@ -146,9 +146,8 @@ to this repository. Read its README section "Add it to your React app" and
 follow it step by step. Requirements: .NET 10 SDK, Node.js 22+, React 18+ with an
 ASP.NET Core backend. Check them first and tell me what is missing.
 
-1. Feeds: create a NuGet.config and .npmrc for GitHub Packages of
-   perisicnikola37 exactly as in "Access to the feeds". Read the token from the
-   GITHUB_PACKAGES_TOKEN environment variable. Never write a literal token to a file.
+1. The packages are public on nuget.org and npmjs.com: no feeds, tokens or
+   .npmrc / NuGet.config changes are needed.
 2. Test project: `dotnet new xunit3 -n <App>.E2E`, add E2eStarter.Playwright and
    Microsoft.Testing.Extensions.TrxReport, use the Microsoft.Testing.Platform runner
    (global.json), <OutputType>Exe</OutputType>, the TestFramework assembly attribute,
@@ -322,42 +321,6 @@ e2e-report --trx out/results.trx --artifacts out/evidence --out out --title "My 
 </details>
 
 Keyboard: `/` search · `j` / `k` step through failures.
-
-## Access to the feeds
-
-GitHub Packages needs a token with `read:packages` (CI: `GITHUB_TOKEN`; locally: a classic PAT), even for public packages.
-
-<details>
-<summary><b>NuGet.config</b> (next to your solution)</summary>
-
-```xml
-<configuration>
-  <packageSources>
-    <add key="perisicnikola37" value="https://nuget.pkg.github.com/perisicnikola37/index.json" />
-  </packageSources>
-  <packageSourceCredentials>
-    <perisicnikola37>
-      <add key="Username" value="YOUR_GITHUB_USER" />
-      <add key="ClearTextPassword" value="%GITHUB_PACKAGES_TOKEN%" />
-    </perisicnikola37>
-  </packageSourceCredentials>
-</configuration>
-```
-
-</details>
-
-<details>
-<summary><b>.npmrc</b> (next to your <code>package.json</code>)</summary>
-
-```
-@perisicnikola37:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_PACKAGES_TOKEN}
-```
-
-</details>
-
-> [!WARNING]
-> Never commit a literal token. Read it from an environment variable, as above.
 
 ## 🚀 Run the starter locally
 

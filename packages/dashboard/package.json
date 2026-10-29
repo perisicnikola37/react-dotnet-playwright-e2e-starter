@@ -36,6 +36,7 @@
     "demo": "node demo/build.mjs --site ../../_site && npx --yes serve ../../_site"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "provenance": true
   }
 }
