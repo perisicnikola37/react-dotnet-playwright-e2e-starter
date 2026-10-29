@@ -1,0 +1,56 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: src/web
+
+      - name: Typecheck and build the web app
+        run: npm run build
+        working-directory: src/web
+
+      - name: Build
+        run: dotnet build E2eStarter.sln -c Release
+
+      - name: Install Playwright browsers
+        run: pwsh tests/E2eStarter.E2E/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run the E2E tests
+        run: scripts/run-e2e.sh
+
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            tests/E2eStarter.E2E/bin/**/artifacts
+            api.log
+            web.log

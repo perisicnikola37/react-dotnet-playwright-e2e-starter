@@ -1,0 +1,11 @@
+bin/
+obj/
+node_modules/
+dist/
+artifacts/
+TestResults/
+*.log
+.vs/
+.idea/
+.env
+.env.*
