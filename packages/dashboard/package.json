@@ -1,0 +1,20 @@
+{
+  "name": "@perisicnikola37/e2e-starter-dashboard",
+  "version": "1.1.0",
+  "description": "A single-file live dashboard and shareable report for automated UI test runs.",
+  "license": "MIT",
+  "author": "Nikola Perisic",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter.git",
+    "directory": "packages/dashboard"
+  },
+  "keywords": ["playwright", "e2e", "test-report", "dashboard", "dotnet", "xunit"],
+  "files": ["dist", "demo/build.mjs", "README.md"],
+  "main": "dist/dashboard.html",
+  "scripts": {
+    "build": "node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').copyFileSync('dashboard.html','dist/dashboard.html')\"",
+    "demo": "node demo/build.mjs --site ../../_site && npx --yes serve ../../_site"
+  },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" }
+}

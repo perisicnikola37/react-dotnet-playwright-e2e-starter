@@ -39,6 +39,7 @@ jobs:
           }
           check Directory.Build.props "$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)"
           check packages/api-client/package.json "$(node -p "require('./packages/api-client/package.json').version")"
+          check packages/dashboard/package.json "$(node -p "require('./packages/dashboard/package.json').version")"
           exit $status
 
       - name: Install, build and test
@@ -53,6 +54,7 @@ jobs:
         run: |
           mkdir -p artifacts/npm artifacts/nuget
           npm pack --workspace packages/api-client --pack-destination artifacts/npm
+          npm pack --workspace packages/dashboard --pack-destination artifacts/npm
           dotnet pack src/E2eStarter.Playwright -c Release --no-build -o artifacts/nuget
 
       - name: Publish the npm package

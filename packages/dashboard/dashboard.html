@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E2E test dashboard</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1c2430;--muted:#667085;--line:#e3e6eb;--head:#121826;--accent:#f5c518;--pass:#16a34a;--fail:#dc2626;--skip:#d97706;--failbg:#fdecec;--code:#f3f4f6}
+[data-theme=dark]{--bg:#0d111a;--card:#161c28;--text:#e6e9ef;--muted:#8b95a7;--line:#252d3d;--head:#0a0d14;--failbg:#2b1519;--code:#1d2433}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}code,pre,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+header{background:var(--head);color:#fff;border-bottom:3px solid var(--accent);padding:14px 0 10px}
+.wrap{max-width:1106px;margin:0 auto;padding:0 20px}
+.top{display:flex;align-items:center;gap:12px}.logo{background:var(--accent);color:#111;font-weight:800;font-size:11px;border-radius:6px;padding:9px 6px;line-height:1}
+.top h1{margin:0;font-size:15px}.top small{color:#aab2c3;font-size:12px}.top a{color:#fff}.sp{flex:1}
+.pill{border:1px solid #33405a;border-radius:999px;padding:4px 12px;font-size:12px;background:#1b2336;color:#fff}.pill.bad::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#f87171;margin-right:7px}
+.icon{border:1px solid #33405a;background:#1b2336;color:#fff;border-radius:8px;width:34px;height:30px}
+.bar{display:flex;height:6px;margin-top:12px;border-radius:3px;overflow:hidden;background:#2a3348}.bar i{display:block}.meta{font-size:12px;color:#c3c9d6;margin-top:7px;display:flex;gap:14px}.meta b{color:#fff}
+.layout{display:grid;grid-template-columns:150px 1fr;gap:20px;margin-top:16px}
+aside h6{margin:4px 0 8px;font-size:11px;letter-spacing:.08em;color:var(--muted)}aside .rr{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:6px}
+aside .rr b{display:block;font-size:12px}aside .rr small{color:var(--muted);font-size:11px}aside p{font-size:11px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:left;box-shadow:0 1px 2px #0000000a}.stat.on{border-color:#2563eb;box-shadow:0 0 0 1px #2563eb}
+.stat strong{display:block;font-size:26px;line-height:1.1}.stat span{font-size:11px;color:var(--muted);letter-spacing:.06em}.p strong{color:var(--pass)}.f strong{color:var(--fail)}.s strong{color:var(--skip)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-top:12px}
+.row{display:flex;align-items:center;gap:8px;padding:10px 14px}.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 8px;color:var(--muted)}
+.chip{font-size:11px;font-weight:600;border-radius:5px;padding:1px 7px}.new{background:var(--fail);color:#fff}.still{border:1px solid var(--fail);color:var(--fail)}
+.fails{background:var(--failbg);border-color:#f5c6c6}.fails h4,.panel h4{margin:0;font-size:11px;letter-spacing:.08em;color:var(--fail)}.panel h4.m{color:var(--muted)}
+.fi{display:flex;gap:12px;padding:10px 14px;border-top:1px solid #f1d0d0}.thumb{width:74px;height:48px;border-radius:4px;background:#fff;border:1px solid var(--line);flex:none;overflow:hidden}.thumb img{width:100%;height:100%;object-fit:cover}
+.fi .t{flex:1;min-width:0}.fi pre{margin:4px 0 0;white-space:pre-wrap;font-size:12px;color:var(--text)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:7px;padding:5px 11px;font-size:12px}.btn.red{color:var(--fail);border-color:#f0b4b4}.btn.on{background:#111827;color:#fff;border-color:#111827}[data-theme=dark] .btn.on{background:#e6e9ef;color:#111}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}.tools input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);padding:7px 10px}
+.cats{margin:10px 0;font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center;letter-spacing:.06em}.cats .btn{font-size:11px;letter-spacing:0}
+.grp>.gh{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;font-weight:600}.gh .stat2{margin-left:auto;font-weight:400;color:var(--muted);font-size:12px}.mini{width:96px;height:5px;border-radius:3px;display:flex;overflow:hidden;background:var(--line)}.mini i{display:block}
+.ti{display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--line);cursor:pointer}.ti:hover{background:#00000006}.ti .d{margin-left:auto;color:var(--muted);font-size:12px}
+.dot{width:16px;height:16px;border-radius:50%;flex:none;color:#fff;font-size:10px;display:grid;place-items:center}.dot.passed{background:var(--pass)}.dot.failed{background:var(--fail)}.dot.skipped{background:var(--skip)}
+.detail{padding:4px 14px 14px 40px;border-top:1px solid var(--line)}.err{background:var(--failbg);border:1px solid #f5c6c6;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;position:relative}
+.acts{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}.two{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}.shot{background:var(--code);border:1px solid var(--line);border-radius:8px;min-height:240px;overflow:hidden}.shot img{width:100%;display:block}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:8px}.box h5{margin:0;padding:7px 10px;font-size:11px;letter-spacing:.08em;color:var(--muted);cursor:pointer}.box .c{padding:4px 10px 10px;font-size:12px}
+.box ol{margin:0;padding:0;list-style:none}.box li{padding:2px 6px}.box li.bad{background:var(--failbg);color:var(--fail);font-weight:600}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px}.gallery .g{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}.gallery img{width:100%;height:110px;object-fit:cover;display:block;background:var(--code)}.gallery div{padding:6px 8px;font-size:12px}
+.hid{display:none}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px}
+.tl .lane{height:14px;background:var(--code);border-radius:3px;position:relative;margin:4px 14px}.tl .lane i{position:absolute;top:0;bottom:0;border-radius:3px}
+.foot{height:40px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<script id="report-data" type="application/json">null</script>
+<div id="app"></div>
+<script>
+(async () => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let data = JSON.parse($("#report-data").textContent);
+  if (!data) { try { data = await (await fetch("data.json")).json(); } catch { /* handled below */ } }
+  const app = $("#app");
+  if (!data) { app.innerHTML = '<div class="wrap"><p>No run data found. Provide <code>data.json</code> next to this page.</p></div>'; return; }
+
+  const fmt = (ms) => ms >= 60000 ? Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0") : ms >= 1000 && ms < 10000 ? (ms / 1000).toFixed(1) + " s" : ms < 1000 ? ms + " ms" : "0:" + String(Math.round(ms / 1000)).padStart(2, "0");
+  const tests = data.tests.map((t) => ({
+    ...t,
+    group: t.name.split(".").slice(-2, -1)[0]?.replace(/Tests$/, "") || "Tests",
+    isNew: t.status === "failed" && t.previous === "passed",
+    still: t.status === "failed" && t.previous === "failed",
+  }));
+  const by = (s) => tests.filter((t) => t.status === s);
+  const total = tests.length, failed = by("failed"), passed = by("passed"), skipped = by("skipped");
+  const elapsed = data.elapsedMs ?? tests.reduce((a, t) => a + t.durationMs, 0);
+  const st = { view: "tests", filter: "all", cat: null, q: "", open: new Set(failed.map((t) => t.name)), collapsed: new Set(), tl: false, slow: false, theme: localStorage.theme || "light" };
+  const cats = [...new Set(tests.flatMap((t) => t.categories))].sort();
+  const cmd = (extra) => "scripts/run-e2e.sh" + (extra ? " -- " + extra : "");
+  const toast = (m) => { const e = document.createElement("div"); e.className = "toast"; e.textContent = m; document.body.append(e); setTimeout(() => e.remove(), 1600); };
+  const copy = (txt, m = "Copied") => navigator.clipboard?.writeText(txt).then(() => toast(m), () => toast("Copy failed"));
+
+  const shotHtml = (t) => t.screenshot ? `<img src="${esc(t.screenshot)}" alt="Screenshot of ${esc(t.name)}">` : "";
+  function detail(t) {
+    const failedStep = t.failedStep ?? -1;
+    return `<div class="detail">
+      ${t.error ? `<div class="err mono">${esc(t.error)}<button class="btn" style="position:absolute;right:8px;top:8px" data-copy="${esc(t.error)}">Copy</button></div>` : ""}
+      <div class="acts">
+        <button class="btn" data-copy="${esc("**" + t.name + "** (" + t.status + ")\n\n" + (t.error ?? ""))}">Copy as markdown</button>
+        ${t.screenshot ? `<button class="btn" data-link="${esc(t.screenshot)}">Download screenshot</button>` : ""}
+        <button class="btn" data-copy="${esc(location.href.split("#")[0] + "#" + encodeURIComponent(t.name))}">Copy link</button>
+      </div>
+      <div class="two"><div class="shot">${shotHtml(t)}</div><div>
+        ${t.url ? `<div class="box"><h5>PAGE URL</h5><div class="c mono">${esc(t.url)}</div></div>` : ""}
+        ${t.steps?.length ? `<div class="box"><h5>STEPS${failedStep >= 0 ? " · LAST ONE RAN BEFORE THE FAILURE" : ""}</h5><div class="c"><ol>${t.steps.map((s, i) => `<li class="${i === failedStep ? "bad" : ""}">${i + 1}. ${esc(s)}</li>`).join("")}</ol></div></div>` : ""}
+        ${t.console?.length ? `<div class="box"><h5>BROWSER CONSOLE</h5><div class="c mono">${t.console.map(esc).join("<br>")}</div></div>` : ""}
+      </div></div>
+      ${t.stack ? `<div class="box" style="margin-top:8px"><h5>STACK TRACE</h5><div class="c mono" style="white-space:pre-wrap">${esc(t.stack)}</div></div>` : ""}
+      <div class="mono" style="color:var(--muted);font-size:11px;margin-top:6px">${esc(t.name)}</div></div>`;
+  }
+  const badge = (t) => t.isNew ? '<span class="chip new">New failure</span>' : t.still ? '<span class="chip still">Still failing</span>' : "";
+  const mark = { passed: "✓", failed: "✕", skipped: "–" };
+
+  function visible() {
+    const q = st.q.toLowerCase();
+    return tests.filter((t) =>
+      (st.filter === "all" || (st.filter === "new" ? t.isNew : t.status === st.filter)) &&
+      (!st.cat || t.categories.includes(st.cat)) && (!q || t.name.toLowerCase().includes(q)));
+  }
+  function timeline() {
+    const lanes = []; let cursor = 0;
+    tests.forEach((t) => { (lanes[0] ??= []).push({ t, s: cursor }); cursor += t.durationMs; });
+    return `<div class="tl" style="padding:8px 0">${lanes.map((l) => `<div class="lane">${l.map(({ t, s }) => `<i title="${esc(t.name)}" style="left:${(s / cursor) * 100}%;width:${(t.durationMs / cursor) * 100}%;background:var(--${t.status === "passed" ? "pass" : t.status === "failed" ? "fail" : "skip"});opacity:.85"></i>`).join("")}</div>`).join("")}</div>`;
+  }
+  function render() {
+    document.documentElement.dataset.theme = st.theme;
+    const list = visible(), groups = {};
+    list.forEach((t) => (groups[t.group] ??= []).push(t));
+    const slow = [...tests].sort((a, b) => b.durationMs - a.durationMs).slice(0, 5);
+    const prev = data.previousRunId;
+    app.innerHTML = `
+    <header><div class="wrap">
+      <div class="top"><div class="logo">E2E</div><div><h1>${esc(data.title)}</h1><small>Run <b>${esc(data.runId)}</b> · ${esc(data.environment)} · <a href="${esc(data.baseUrl)}">${esc(data.baseUrl)}</a> · ${new Date(data.startedAt).toLocaleString()}</small></div><div class="sp"></div>
+        ${failed.length ? `<span class="pill bad">${failed.length} failed</span>` : '<span class="pill">All passed</span>'}<button class="icon" id="theme" aria-label="Toggle theme">${st.theme === "dark" ? "☀" : "☾"}</button></div>
+      <div class="bar"><i style="width:${(passed.length / total) * 100}%;background:var(--pass)"></i><i style="width:${(failed.length / total) * 100}%;background:var(--fail)"></i><i style="width:${(skipped.length / total) * 100}%;background:var(--skip)"></i></div>
+      <div class="meta"><b>100%</b><span><b>${total}</b> / ${total} tests</span><span>Elapsed <b>${fmt(elapsed)}</b></span></div>
+    </div></header>
+    <div class="wrap layout"><aside><h6>RE-RUN</h6>
+      ${[["▶", "All tests", "the whole suite", ""], ["✕", "Failed only", failed.length + " failed tests", "--filter-method " + failed.map((t) => "*" + t.name.split(".").pop()).join(" ")], ["½", "1/2 of tests", "random half", "--random 2"], ["⅓", "1/3 of tests", "random third", "--random 3"], ["¼", "1/4 of tests", "random quarter", "--random 4"]]
+        .map(([i, a, b, c]) => `<button class="rr" data-copy="${esc(cmd(c))}" data-msg="Re-run command copied"><span>${i}</span><span><b>${a}</b><small>${b}</small></span></button>`).join("")}
+      <p>Copies the command; run it in your terminal or CI.</p></aside>
+    <main>
+      <div class="cards">${[["all", total, "TOTAL", ""], ["passed", passed.length, "PASSED", "p"], ["failed", failed.length, "FAILED", "f"], ["skipped", skipped.length, "SKIPPED", "s"]]
+        .map(([k, n, l, c]) => `<button class="stat ${c} ${st.filter === k ? "on" : ""}" data-filter="${k}"><strong>${n}</strong><span>${l}</span></button>`).join("")}
+        <div class="stat"><strong>${fmt(elapsed)}</strong><span>DURATION</span></div></div>
+      ${prev ? `<div class="panel row"><span style="color:var(--muted)">vs run <b style="color:var(--text)">${esc(prev)}</b></span>${tests.some((t) => t.isNew) ? `<span class="chip new">${tests.filter((t) => t.isNew).length} new failure</span>` : ""}${tests.some((t) => t.still) ? `<span class="chip still">${tests.filter((t) => t.still).length} still failing</span>` : ""}</div>` : ""}
+      ${failed.length ? `<div class="panel fails"><div class="row"><h4>FAILURES</h4><span class="tag">${failed.length}</span><small style="color:var(--muted)">grouped by cause · <kbd>j</kbd> <kbd>k</kbd> step through</small><div class="sp"></div><button class="btn red" data-copy="${esc(cmd("--filter-method " + failed.map((t) => "*" + t.name.split(".").pop()).join(" ")))}" data-msg="Re-run command copied">Copy re-run command</button></div>
+        ${failed.map((t) => `<div class="fi" data-jump="${esc(t.name)}"><div class="thumb">${shotHtml(t)}</div><div class="t"><div><span class="dot failed">✕</span> <b>${esc(t.name)}</b> <span style="color:var(--muted)">· ${esc(t.group)}</span> ${badge(t)}</div><pre class="mono">${esc((t.error ?? "").split("\n").slice(0, 3).join(" "))}</pre></div><span style="color:var(--muted)">${fmt(t.durationMs)}</span></div>`).join("")}</div>` : ""}
+      <div class="panel"><div class="row"><h4 class="m">TIMELINE</h4><small style="color:var(--muted)">1 parallel browser at peak · wall ${fmt(elapsed)}</small><div class="sp"></div><button class="btn" data-toggle="tl">${st.tl ? "Hide" : "Show"}</button></div>${st.tl ? timeline() : ""}</div>
+      <div class="panel"><div class="row"><h4 class="m">SLOWEST TESTS</h4><div class="sp"></div><button class="btn" data-toggle="slow">${st.slow ? "Hide" : "Show"}</button></div>${st.slow ? slow.map((t) => `<div class="ti"><span class="dot ${t.status}">${mark[t.status]}</span>${esc(t.name)}<span class="d">${fmt(t.durationMs)}</span></div>`).join("") : ""}</div>
+      <div class="tools"><input id="q" placeholder="Search tests, classes or arguments   ( / )" value="${esc(st.q)}">
+        <button class="btn ${st.view === "tests" ? "on" : ""}" data-view="tests">Tests</button><button class="btn ${st.view === "gallery" ? "on" : ""}" data-view="gallery">Gallery · ${total}</button>
+        ${[["all", "All", total], ["failed", "Failed", failed.length], ["passed", "Passed", passed.length], ["skipped", "Skipped", skipped.length], ["new", "New failures", tests.filter((t) => t.isNew).length]].map(([k, l, n]) => `<button class="btn ${st.filter === k ? "on" : ""}" data-filter="${k}">${l} ${n}</button>`).join("")}
+        <button class="btn" id="expand">Expand all</button><button class="btn" id="collapse">Collapse all</button></div>
+      <div class="cats">CATEGORY ${cats.map((c) => `<button class="btn ${st.cat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${tests.filter((t) => t.categories.includes(c)).length}</button>`).join("")}</div>
+      ${st.view === "gallery" ? `<div class="gallery">${list.map((t) => `<div class="g">${t.screenshot ? `<img src="${esc(t.screenshot)}" alt="">` : "<img alt=''>"}<div><span class="dot ${t.status}" style="display:inline-grid">${mark[t.status]}</span> ${esc(t.name.split(".").pop())}</div></div>`).join("")}</div>`
+      : Object.entries(groups).map(([g, ts]) => {
+        const f = ts.filter((t) => t.status === "failed").length, p = ts.filter((t) => t.status === "passed").length, sk = ts.length - f - p, shut = st.collapsed.has(g);
+        return `<div class="panel grp"><div class="gh" data-group="${esc(g)}"><span>${shut ? "›" : "⌄"}</span>${esc(g)} ${[...new Set(ts.flatMap((t) => t.categories))].map((c) => `<span class="tag">${esc(c)}</span>`).join("")}${f ? '<span class="dot failed">✕</span>' : ""}
+          <span class="stat2">${ts.length}/${ts.length}${f ? ` · ${f} failed` : ""} · ${fmt(ts.reduce((a, t) => a + t.durationMs, 0))}</span><span class="mini"><i style="width:${(p / ts.length) * 100}%;background:var(--pass)"></i><i style="width:${(f / ts.length) * 100}%;background:var(--fail)"></i><i style="width:${(sk / ts.length) * 100}%;background:var(--skip)"></i></span></div>
+          ${shut ? "" : ts.map((t) => `<div id="${esc(encodeURIComponent(t.name))}"><div class="ti" data-test="${esc(t.name)}"><span class="dot ${t.status}">${mark[t.status]}</span>${esc(t.name)} ${badge(t)}<span class="d">${fmt(t.durationMs)}</span></div>${st.open.has(t.name) ? detail(t) : ""}</div>`).join("")}</div>`;
+      }).join("") || '<p style="color:var(--muted)">No tests match.</p>'}
+      <div class="foot"></div></main></div>`;
+  }
+  app.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-copy],[data-link],[data-filter],[data-cat],[data-view],[data-toggle],[data-group],[data-test],[data-jump],#theme,#expand,#collapse");
+    if (!el) return;
+    const d = el.dataset;
+    if (d.copy !== undefined) return copy(d.copy, d.msg);
+    if (d.link !== undefined) { const a = document.createElement("a"); a.href = d.link; a.download = "screenshot.svg"; a.click(); return; }
+    if (d.filter) st.filter = d.filter; else if (d.cat !== undefined) st.cat = st.cat === d.cat ? null : d.cat;
+    else if (d.view) st.view = d.view; else if (d.toggle) st[d.toggle] = !st[d.toggle];
+    else if (d.group) st.collapsed.has(d.group) ? st.collapsed.delete(d.group) : st.collapsed.add(d.group);
+    else if (d.test) st.open.has(d.test) ? st.open.delete(d.test) : st.open.add(d.test);
+    else if (d.jump) { st.open.add(d.jump); st.filter = "all"; render(); return document.getElementById(encodeURIComponent(d.jump))?.scrollIntoView({ block: "center" }); }
+    else if (el.id === "theme") { st.theme = st.theme === "dark" ? "light" : "dark"; localStorage.theme = st.theme; }
+    else if (el.id === "expand") visible().forEach((t) => st.open.add(t.name)); else if (el.id === "collapse") st.open.clear();
+    render();
+  });
+  app.addEventListener("input", (e) => { if (e.target.id === "q") { st.q = e.target.value; const p = e.target.selectionStart; render(); const q = $("#q"); q.focus(); q.setSelectionRange(p, p); } });
+  let fi = -1;
+  addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "/") { e.preventDefault(); $("#q").focus(); }
+    if ((e.key === "j" || e.key === "k") && failed.length) {
+      fi = (fi + (e.key === "j" ? 1 : -1) + failed.length) % failed.length; st.open.add(failed[fi].name); st.filter = "all"; render();
+      document.getElementById(encodeURIComponent(failed[fi].name))?.scrollIntoView({ block: "center" });
+    }
+  });
+  render();
+})();
+</script>
+</body>
+</html>

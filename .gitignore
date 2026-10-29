@@ -13,3 +13,4 @@ TestResults/
 artifacts/
 packages/*/dist/
 vulnerable.txt
+_site/

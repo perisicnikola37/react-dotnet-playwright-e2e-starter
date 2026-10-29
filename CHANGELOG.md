@@ -2,6 +2,17 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-29
+
+### Added
+
+- `@perisicnikola37/e2e-starter-dashboard`: a single-file live dashboard and standalone report for test runs, with a demo on GitHub Pages.
+- Redesigned README with packages table, architecture diagram and data contracts.
+
+### Removed
+
+- The in-app "Automated tests" page of the sample web app (replaced by the dashboard).
+
 ## [1.0.0] - 2026-10-29
 
 ### Added
@@ -14,3 +25,4 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - CI (build, tests, E2E, CodeQL, commitlint), Dependabot and a tag-driven publish workflow.
 
 [1.0.0]: https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/releases/tag/v1.0.0
+[1.1.0]: https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/releases/tag/v1.1.0

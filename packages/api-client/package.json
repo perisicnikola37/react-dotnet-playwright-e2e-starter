@@ -1,6 +1,6 @@
 {
   "name": "@perisicnikola37/e2e-starter-client",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Typed fetch client for the E2E starter items API. Framework-agnostic, zero dependencies.",
   "license": "MIT",
   "author": "Nikola Perisic",
