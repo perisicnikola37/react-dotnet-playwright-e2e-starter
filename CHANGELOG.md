@@ -2,6 +2,13 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- The packages are now published to nuget.org and npmjs.com (NuGet via trusted publishing, npm with provenance) instead of GitHub Packages. Installing them no longer needs a token, a `NuGet.config` or an `.npmrc`; remove those entries if you added them for 1.x.
+- The landing page has a new design and a step by step quick start with the install commands and an AI assistant prompt.
+
 ## [1.3.0] - 2026-10-29
 
 ### Added

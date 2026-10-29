@@ -15,6 +15,8 @@ ASP.NET Core · React · Playwright for .NET · xUnit v3 · GitHub Actions
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![React](https://img.shields.io/badge/React-18%20%7C%2019-61DAFB?logo=react&logoColor=black)
 ![Playwright](https://img.shields.io/badge/Playwright-.NET-2EAD33?logo=playwright&logoColor=white)
+[![NuGet](https://img.shields.io/nuget/v/E2eStarter.AspNetCore?logo=nuget&label=NuGet)](https://www.nuget.org/packages/E2eStarter.AspNetCore)
+[![npm](https://img.shields.io/npm/v/@perisicnikola37/e2e-starter-react?logo=npm&label=npm)](https://www.npmjs.com/package/@perisicnikola37/e2e-starter-react)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [**Live demo**](https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/demo/) · [Website](https://perisicnikola37.github.io/react-dotnet-playwright-e2e-starter/) · [Add it to your app](#-add-it-to-your-react-app) · [How it works](#-how-it-works) · [Security](#-security) · [FAQ](#-faq)
@@ -44,11 +46,11 @@ Use it two ways: **add the packages to an existing React + ASP.NET Core app**, o
 
 | Package | Add it to | What it does |
 |---|---|---|
-| [`E2eStarter.Playwright`](src/E2eStarter.Playwright) | your **UI test project** (NuGet) | `SuiteFixture` and `UiTestBase`: browser per run, context and trace per test, failure evidence, `Step()`, live progress events |
-| [`E2eStarter.AspNetCore`](src/E2eStarter.AspNetCore) | your **ASP.NET Core API** (NuGet) | `AddAutomatedTests()` / `MapAutomatedTests()`: start, list and re-run runs; serve the dashboard and evidence |
-| [`E2eStarter.Reporters`](src/E2eStarter.Reporters) | CI or the API host (dotnet tool) | `e2e-report`: TRX + evidence to `data.json`, `index.html` (dashboard) and `report.html` (standalone) |
-| [`@perisicnikola37/e2e-starter-react`](packages/react) | your **React app** (npm) | `<AutomatedTestsPage />` and `createAutomatedTestsClient()` |
-| [`@perisicnikola37/e2e-starter-dashboard`](packages/dashboard) | any web host (npm) | `dashboard.html`: the single-file dashboard and report, plus the `data.json` contract |
+| [`E2eStarter.Playwright`](https://www.nuget.org/packages/E2eStarter.Playwright) | your **UI test project** (NuGet) | `SuiteFixture` and `UiTestBase`: browser per run, context and trace per test, failure evidence, `Step()`, live progress events |
+| [`E2eStarter.AspNetCore`](https://www.nuget.org/packages/E2eStarter.AspNetCore) | your **ASP.NET Core API** (NuGet) | `AddAutomatedTests()` / `MapAutomatedTests()`: start, list and re-run runs; serve the dashboard and evidence |
+| [`E2eStarter.Reporters`](https://www.nuget.org/packages/E2eStarter.Reporters) | CI or the API host (dotnet tool) | `e2e-report`: TRX + evidence to `data.json`, `index.html` (dashboard) and `report.html` (standalone) |
+| [`@perisicnikola37/e2e-starter-react`](https://www.npmjs.com/package/@perisicnikola37/e2e-starter-react) | your **React app** (npm) | `<AutomatedTestsPage />` and `createAutomatedTestsClient()` |
+| [`@perisicnikola37/e2e-starter-dashboard`](https://www.npmjs.com/package/@perisicnikola37/e2e-starter-dashboard) | any web host (npm) | `dashboard.html`: the single-file dashboard and report, plus the `data.json` contract |
 
 > [!NOTE]
 > The packages are published to [nuget.org](https://www.nuget.org/profiles/perisicnikola37) and [npmjs.com](https://www.npmjs.com/~perisicnikola37) and versioned together (tag `vX.Y.Z`). No tokens or extra feeds are needed to install them.
