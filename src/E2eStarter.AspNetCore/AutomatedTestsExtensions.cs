@@ -121,9 +121,7 @@ public static class AutomatedTestsExtensions
         dashboard.MapGet("/{**path}", (string id, string? path, HttpContext http, TestRunService runs) =>
         {
             path = string.IsNullOrEmpty(path) ? Index : path;
-            var root = Path.GetFullPath(runs.FolderOf(id)) + Path.DirectorySeparatorChar;
-            var full = Path.GetFullPath(Path.Combine(root, path));
-            if (!full.StartsWith(root, StringComparison.Ordinal) || !Directory.Exists(root))
+            if (runs.FindFolder(id) is not { } folder)
             {
                 return Results.NotFound();
             }
@@ -132,10 +130,10 @@ public static class AutomatedTestsExtensions
             NoStore(http);
             http.Response.Headers.ContentSecurityPolicy = isDashboard ? DashboardPolicy : "sandbox";
 
-            if (File.Exists(full))
+            if (TestRunService.FindFile(folder, path) is { } file)
             {
-                types.TryGetContentType(full, out var contentType);
-                return Results.File(full, contentType ?? "application/octet-stream");
+                types.TryGetContentType(file, out var contentType);
+                return Results.File(file, contentType ?? "application/octet-stream");
             }
 
             // While a run is going there is no index.html yet: the built-in dashboard follows events.jsonl live.
@@ -164,8 +162,8 @@ public static class AutomatedTestsExtensions
     private static IResult Log(HttpContext http, TestRunService runs, string id)
     {
         NoStore(http);
-        var file = Path.Combine(runs.FolderOf(id), TestRunService.LogFile);
-        return TestRunService.IsValidId(id) && File.Exists(file)
+        var file = runs.FindFolder(id) is { } folder ? Path.Combine(folder, TestRunService.LogFile) : null;
+        return file is not null && File.Exists(file)
             ? Results.Text(TestRunService.ReadShared(file), "text/plain; charset=utf-8")
             : Results.NotFound();
     }

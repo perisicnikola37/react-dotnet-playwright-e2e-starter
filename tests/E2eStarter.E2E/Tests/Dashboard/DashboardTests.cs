@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using E2eStarter.E2E.Pages;
 using E2eStarter.Playwright.Infrastructure;
 using static Microsoft.Playwright.Assertions;
@@ -94,7 +95,7 @@ public sealed class DashboardTests(SuiteFixture suite) : UiTestBase(suite)
         await dashboard.OpenAsync(DashboardHarness.ServedRun);
         await dashboard.ReRun("Failed only").ClickAsync();
 
-        await Page.WaitForURLAsync("**/20260101000001000/index.html");
+        await Expect(Page).ToHaveURLAsync(new Regex("/20260101000001000/index\\.html$"));
         dashboard.Posts.TryPeek(out var request).ShouldBeTrue();
         request!.Headers["x-requested-with"].ShouldBe("e2e-dashboard");
         request.PostData.ShouldBe("""{"mode":"failed"}""");

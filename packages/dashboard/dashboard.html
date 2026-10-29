@@ -132,10 +132,26 @@ aside .rr:disabled{opacity:.5;cursor:default}.notice{background:var(--card);bord
   const st = { view: "tests", filter: "all", cat: null, q: "", open: new Set(), opened: false, collapsed: new Set(), tl: false, slow: false, theme: localStorage.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"), busy: false };
   const mark = { passed: "✓", failed: "✕", skipped: "–", queued: "", running: "" };
 
+  // Run data may come from anywhere (a shared report.html, a hand-written data.json): every value that ends up in
+  // markup is either escaped with esc() or forced into a known shape here.
+  const statuses = new Set(["passed", "failed", "skipped", "queued", "running"]);
+  const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const strings = (v) => (Array.isArray(v) ? v.map(String) : []);
+  const normalize = (t) => ({
+    ...t,
+    name: String(t.name ?? ""),
+    status: statuses.has(t.status) ? t.status : "skipped",
+    previous: statuses.has(t.previous) ? t.previous : undefined,
+    durationMs: num(t.durationMs),
+    failedStep: Number.isInteger(t.failedStep) ? t.failedStep : -1,
+    categories: strings(t.categories),
+    steps: strings(t.steps),
+    console: strings(t.console),
+  });
+
   function model() {
-    const tests = data.tests.map((t) => ({
+    const tests = (Array.isArray(data.tests) ? data.tests : []).map(normalize).map((t) => ({
       ...t,
-      categories: t.categories ?? [],
       group: t.name.split("(")[0].split(".").slice(-2, -1)[0]?.replace(/Tests$/, "") || "Tests",
       isNew: t.status === "failed" && t.previous === "passed",
       still: t.status === "failed" && t.previous === "failed",
@@ -143,12 +159,12 @@ aside .rr:disabled{opacity:.5;cursor:default}.notice{background:var(--card);bord
     const by = (s) => tests.filter((t) => t.status === s);
     const failed = by("failed"), passed = by("passed"), skipped = by("skipped"), running = by("running"), queued = by("queued");
     const done = failed.length + passed.length + skipped.length;
-    return { tests, failed, passed, skipped, running, queued, done, total: tests.length, elapsed: data.elapsedMs ?? tests.reduce((a, t) => a + (t.durationMs || 0), 0) };
+    return { tests, failed, passed, skipped, running, queued, done, total: tests.length, elapsed: data.elapsedMs != null ? num(data.elapsedMs) : tests.reduce((a, t) => a + (t.durationMs || 0), 0) };
   }
 
   const shotHtml = (t) => url(t.screenshot) ? `<img src="${esc(url(t.screenshot))}" alt="Screenshot of ${esc(short(t.name))}" loading="lazy">` : "";
   function detail(t) {
-    const failedStep = t.failedStep ?? -1;
+    const failedStep = t.failedStep;
     return `<div class="detail">
       ${t.error ? `<div class="err mono">${esc(t.error)}<button class="btn" style="position:absolute;right:8px;top:8px" data-copy="${esc(t.error)}">Copy</button></div>` : ""}
       <div class="acts">

@@ -32,6 +32,21 @@ public sealed partial class TestRunService(IOptions<AutomatedTestsOptions> optio
 
     public string FolderOf(string id) => Path.Combine(RunsRoot, id);
 
+    // Resolves a run id from a request to its folder. The path is taken from the directory listing, never built from
+    // the request, so nothing outside RunsRoot can be reached.
+    public string? FindFolder(string? id) =>
+        IsValidId(id) && Directory.Exists(RunsRoot)
+            ? Directory.EnumerateDirectories(RunsRoot).FirstOrDefault(folder => Path.GetFileName(folder) == id)
+            : null;
+
+    // Resolves a relative path from a request to an existing file below a run folder, again from the directory listing.
+    public static string? FindFile(string folder, string relative)
+    {
+        var wanted = Path.GetFullPath(Path.Combine(folder, relative));
+        return Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
+            .FirstOrDefault(file => string.Equals(Path.GetFullPath(file), wanted, StringComparison.Ordinal));
+    }
+
     // Returns null while another run is in progress: runs share the app under test and its data.
     public RunInfo? Start(string? category, IReadOnlyList<string>? tests = null)
     {
@@ -105,11 +120,12 @@ public sealed partial class TestRunService(IOptions<AutomatedTestsOptions> optio
             }
         }
 
-        var file = Path.Combine(FolderOf(id), RunFile);
+        var folder = FindFolder(id);
+        var file = folder is null ? null : Path.Combine(folder, RunFile);
         RunInfo? run;
         try
         {
-            run = File.Exists(file) ? JsonSerializer.Deserialize<RunInfo>(File.ReadAllText(file), RunJson.Options) : null;
+            run = file is not null && File.Exists(file) ? JsonSerializer.Deserialize<RunInfo>(File.ReadAllText(file), RunJson.Options) : null;
         }
         catch (Exception ex) when (ex is JsonException or IOException)
         {
@@ -129,14 +145,14 @@ public sealed partial class TestRunService(IOptions<AutomatedTestsOptions> optio
     // Names of the failed tests, from data.json or, when the reporter did not get to run, from events.jsonl.
     public IReadOnlyList<string> FailedTests(string id)
     {
-        if (!IsValidId(id))
+        if (FindFolder(id) is not { } folder)
         {
             return [];
         }
 
         try
         {
-            var data = Path.Combine(FolderOf(id), DataFile);
+            var data = Path.Combine(folder, DataFile);
             if (File.Exists(data))
             {
                 using var doc = JsonDocument.Parse(File.ReadAllText(data));
@@ -146,7 +162,7 @@ public sealed partial class TestRunService(IOptions<AutomatedTestsOptions> optio
                     .ToList();
             }
 
-            var events = Path.Combine(FolderOf(id), EventsFile);
+            var events = Path.Combine(folder, EventsFile);
             if (File.Exists(events))
             {
                 return ReadShared(events)
@@ -160,7 +176,7 @@ public sealed partial class TestRunService(IOptions<AutomatedTestsOptions> optio
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or IOException)
         {
-            _logger.LogWarning(ex, "Could not read the failed tests of run {RunId}", id);
+            _logger.LogWarning(ex, "Could not read the failed tests in {RunFolder}", folder);
         }
 
         return [];
