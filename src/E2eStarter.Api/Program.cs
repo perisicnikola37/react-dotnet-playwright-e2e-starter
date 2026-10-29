@@ -1,12 +1,21 @@
 using System.Collections.Concurrent;
+using E2eStarter.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<ItemStore>();
 builder.Services.AddHealthChecks();
+builder.Services.AddAutomatedTests(o =>
+{
+    o.Enabled = !builder.Environment.IsProduction();
+    o.WorkingDirectory = Path.GetFullPath(builder.Configuration["AutomatedTests:WorkingDirectory"] ?? ".", builder.Environment.ContentRootPath);
+    o.Environment["AUTOMATED_TESTS_TITLE"] = "Items app · E2E tests";
+    o.Environment["AUTOMATED_TESTS_ENV"] = builder.Environment.EnvironmentName;
+});
 
 var app = builder.Build();
 
 app.MapHealthChecks("/health");
+app.MapAutomatedTests();
 
 var items = app.MapGroup("/api/items");
 

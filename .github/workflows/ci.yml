@@ -33,7 +33,9 @@ jobs:
         run: npm run build
 
       - name: Test the client package
-        run: npm test --workspace packages/api-client
+        run: |
+          npm test --workspace packages/api-client
+          npm test --workspace packages/react
 
   dotnet:
     name: Build and test (.NET)
@@ -57,4 +59,7 @@ jobs:
         run: dotnet test --project tests/E2eStarter.Api.Tests -c Release --no-build
 
       - name: Pack the NuGet package (dry run)
-        run: dotnet pack src/E2eStarter.Playwright -c Release --no-build -o artifacts/nuget
+        run: |
+          dotnet pack src/E2eStarter.Playwright -c Release --no-build -o artifacts/nuget
+          dotnet pack src/E2eStarter.Reporters -c Release --no-build -o artifacts/nuget
+          dotnet pack src/E2eStarter.AspNetCore -c Release --no-build -o artifacts/nuget

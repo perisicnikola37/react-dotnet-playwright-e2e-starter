@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>E2eStarter.Reporters</PackageId>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>e2e-report</ToolCommandName>
+    <Description>dotnet tool that turns a TRX test report plus failure evidence into a data.json, a live dashboard (index.html) and a standalone report.html.</Description>
+    <PackageTags>playwright;e2e;testing;xunit;test-report;dashboard;trx</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <EmbeddedResource Include="..\..\packages\dashboard\dashboard.html" LogicalName="dashboard.html" />
+  </ItemGroup>
+
+</Project>

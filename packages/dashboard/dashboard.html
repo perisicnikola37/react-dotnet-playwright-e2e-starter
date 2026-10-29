@@ -87,6 +87,8 @@ aside .rr b{display:block;font-size:12px}aside .rr small{color:var(--muted);font
         ${t.url ? `<div class="box"><h5>PAGE URL</h5><div class="c mono">${esc(t.url)}</div></div>` : ""}
         ${t.steps?.length ? `<div class="box"><h5>STEPS${failedStep >= 0 ? " · LAST ONE RAN BEFORE THE FAILURE" : ""}</h5><div class="c"><ol>${t.steps.map((s, i) => `<li class="${i === failedStep ? "bad" : ""}">${i + 1}. ${esc(s)}</li>`).join("")}</ol></div></div>` : ""}
         ${t.console?.length ? `<div class="box"><h5>BROWSER CONSOLE</h5><div class="c mono">${t.console.map(esc).join("<br>")}</div></div>` : ""}
+        ${t.pageHtml ? `<p><a href="${esc(t.pageHtml)}" target="_blank" rel="noopener">Open captured page HTML ↗</a></p>` : ""}
+        ${t.trace ? `<p><a href="${esc(t.trace)}" download>Download Playwright trace ↓</a> <small style="color:var(--muted)">(open with <code>npx playwright show-trace</code>)</small></p>` : ""}
       </div></div>
       ${t.stack ? `<div class="box" style="margin-top:8px"><h5>STACK TRACE</h5><div class="c mono" style="white-space:pre-wrap">${esc(t.stack)}</div></div>` : ""}
       <div class="mono" style="color:var(--muted);font-size:11px;margin-top:6px">${esc(t.name)}</div></div>`;

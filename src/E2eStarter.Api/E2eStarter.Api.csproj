@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\E2eStarter.AspNetCore\E2eStarter.AspNetCore.csproj" />
+  </ItemGroup>
+
 </Project>

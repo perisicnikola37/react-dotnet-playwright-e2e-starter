@@ -17,7 +17,7 @@ scripts/run-e2e.sh
 
 - `npm run build` and `npm test --workspace packages/api-client`
 - `dotnet build E2eStarter.sln` and `dotnet test --project tests/E2eStarter.Api.Tests`
-- `scripts/run-e2e.sh`
+- `scripts/run-e2e.sh` (full local cycle) and, against a running app, `scripts/run-ci.sh <run folder> [category]` (tests plus `e2e-report`)
 
 ## Commit messages and pull request titles
 
@@ -38,8 +38,8 @@ docs: explain StorageState authentication
 
 ## Releasing (maintainers)
 
-1. Bump `<Version>` in `Directory.Build.props` and `version` in `packages/api-client/package.json` (they must match).
+1. Bump `<Version>` in `Directory.Build.props` and `version` in every `packages/*/package.json` (api-client, dashboard, react); they must all match.
 2. Update `CHANGELOG.md`.
 3. Merge, then tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-The **Publish** workflow checks that the tag matches both versions, then publishes the NuGet and npm packages to GitHub Packages and creates the GitHub Release.
+The **Publish** workflow checks that the tag matches every version, then publishes the NuGet and npm packages to GitHub Packages and creates the GitHub Release.

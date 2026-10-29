@@ -1,0 +1,41 @@
+{
+  "name": "@perisicnikola37/e2e-starter-react",
+  "version": "1.2.0",
+  "description": "A drop-in React page that starts automated UI test runs, lists them and shows the live dashboard.",
+  "license": "MIT",
+  "author": "Nikola Perisic",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "keywords": ["playwright", "e2e", "react", "test-dashboard", "automated-tests", "typescript"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter.git",
+    "directory": "packages/react"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "test": "node --test --experimental-strip-types test/*.test.ts"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.1",
+    "typescript": "^7.0.2"
+  }
+}

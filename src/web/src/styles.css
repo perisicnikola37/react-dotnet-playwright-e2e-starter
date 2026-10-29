@@ -7,3 +7,7 @@ button { padding: 0.4rem 0.8rem; cursor: pointer; }
 ul { list-style: none; padding: 0; }
 li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #dde1e7; }
 [role="alert"] { color: #b00020; }
+nav { display: flex; gap: 1rem; padding: 0.8rem 1.5rem; background: #fff; border-bottom: 1px solid #dde1e7; }
+nav a { color: #1c2430; text-decoration: none; }
+nav a[aria-current="page"] { font-weight: 700; border-bottom: 2px solid #2563eb; }
+main.wide { max-width: 1200px; }

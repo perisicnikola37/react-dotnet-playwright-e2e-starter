@@ -2,6 +2,16 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-29
+
+### Added
+
+- `E2eStarter.Reporters`: the `e2e-report` dotnet tool that turns a TRX and failure evidence into `data.json`, `index.html` and `report.html`.
+- `E2eStarter.AspNetCore`: `AddAutomatedTests` / `MapAutomatedTests` endpoints to start runs and serve their dashboards.
+- `@perisicnikola37/e2e-starter-react`: `AutomatedTestsPage` and `createAutomatedTestsClient`.
+- `scripts/run-ci.sh`: runs the tests with a TRX report and then `e2e-report`.
+- Automated tests page in the sample app.
+
 ## [1.1.0] - 2026-10-29
 
 ### Added
@@ -26,3 +36,4 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 [1.0.0]: https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/releases/tag/v1.0.0
 [1.1.0]: https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/releases/tag/v1.1.0
+[1.2.0]: https://github.com/perisicnikola37/react-dotnet-playwright-e2e-starter/releases/tag/v1.2.0

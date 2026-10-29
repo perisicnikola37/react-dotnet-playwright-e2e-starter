@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>E2eStarter.AspNetCore</PackageId>
+    <Description>ASP.NET Core endpoints to start automated UI test runs, list them and serve their dashboard and evidence: AddAutomatedTests() and MapAutomatedTests().</Description>
+    <PackageTags>playwright;e2e;testing;aspnetcore;test-dashboard;minimal-api</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
