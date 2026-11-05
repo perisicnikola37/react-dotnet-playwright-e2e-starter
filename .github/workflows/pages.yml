@@ -32,7 +32,7 @@ jobs:
           cp -r site/. _site/
           cp docs/preview.png docs/social-preview.png _site/
           node packages/dashboard/demo/build.mjs --site _site/demo
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: deployment
